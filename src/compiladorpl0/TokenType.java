@@ -19,6 +19,9 @@ public enum TokenType {
     PUNTO_Y_COMA, 
     COMA, 
     EOF,
+    COMPARAR,
+    CADENA,
+    PUNTO,
     PALABRA_RESERVADA
 }
 
