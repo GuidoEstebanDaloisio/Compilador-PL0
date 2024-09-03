@@ -15,7 +15,7 @@ public class Main {
                 token = alex.escanear();
                 System.out.println(token);
             } while (token.getTipo() != TokenType.EOF);
-
+            
         } catch (IOException e) {
             System.err.println("Error al leer el archivo: " + e.getMessage());
         } finally {
