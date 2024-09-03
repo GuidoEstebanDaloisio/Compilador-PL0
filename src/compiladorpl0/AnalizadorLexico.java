@@ -1,5 +1,4 @@
 package compiladorpl0;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -42,11 +41,11 @@ public class AnalizadorLexico {
                 identificador.append((char) currentChar);
                 avanzar();
             }
-            String lexema = identificador.toString();
+            String lexema = identificador.toString().toLowerCase(); // Convertir a minúsculas
             if (PALABRAS_RESERVADAS.contains(lexema)) {
                 return new Token(TokenType.PALABRA_RESERVADA, lexema);
             } else {
-                return new Token(TokenType.IDENTIFICADOR, lexema);
+                return new Token(TokenType.IDENTIFICADOR, identificador.toString());
             }
         }
 
@@ -59,26 +58,26 @@ public class AnalizadorLexico {
             return new Token(TokenType.NUMERO, numero.toString());
         }
 
-if (currentChar == '\'') {
-    StringBuilder cadena = new StringBuilder();
-    avanzar();
-    while (currentChar != '\'' && currentChar != -1 && currentChar != '\n') {
-        cadena.append((char) currentChar);
-        avanzar();
-    }
-    if (currentChar == '\'') {
-        avanzar();
-        return new Token(TokenType.CADENA, cadena.toString());
-    } else {
-        cadena.append((char) currentChar); // Añadir el salto de línea si es necesario
-        avanzar();
-        while (currentChar != -1 && currentChar != '\n') { // Leer hasta el final de la línea
-            cadena.append((char) currentChar);
+        if (currentChar == '\'') {
+            StringBuilder cadena = new StringBuilder();
             avanzar();
+            while (currentChar != '\'' && currentChar != -1 && currentChar != '\n') {
+                cadena.append((char) currentChar);
+                avanzar();
+            }
+            if (currentChar == '\'') {
+                avanzar();
+                return new Token(TokenType.CADENA, cadena.toString());
+            } else {
+                cadena.append((char) currentChar); // Añadir el salto de línea si es necesario
+                avanzar();
+                while (currentChar != -1 && currentChar != '\n') { // Leer hasta el final de la línea
+                    cadena.append((char) currentChar);
+                    avanzar();
+                }
+                return new Token(TokenType.NUL, cadena.toString());
+            }
         }
-        return new Token(TokenType.NUL, cadena.toString());
-    }
-}
 
         switch (currentChar) {
             case ':':
@@ -137,11 +136,8 @@ if (currentChar == '\'') {
                 return new Token(TokenType.COMA, ",");
             case '.':
                 avanzar();
-                if (eofReached) {
                     return new Token(TokenType.PUNTO, ".");
-                } else {
-                    return new Token(TokenType.NUL, ".");
-                }
+                
             default:
                 throw new RuntimeException("Carácter inesperado: " + (char) currentChar);
         }

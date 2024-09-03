@@ -4,7 +4,7 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
-        String filePath = "BIEN-00.PL0"; // Ruta del archivo definida manualmente
+        String filePath = "BIEN-01.PL0"; // Ruta del archivo definida manualmente
         AnalizadorLexico alex = null;
 
         try {
