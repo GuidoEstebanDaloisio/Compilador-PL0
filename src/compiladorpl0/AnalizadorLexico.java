@@ -1,5 +1,4 @@
 package compiladorpl0;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -13,6 +12,7 @@ public class AnalizadorLexico {
     private static final Set<String> PALABRAS_RESERVADAS = new HashSet<>(Arrays.asList(
         "const", "var", "procedure", "call", "begin", "end", "if", "then", "while", "do", "odd", "readln", "writeln", "write"
     ));
+    private boolean eofReached = false;
 
     public AnalizadorLexico(String filePath) throws IOException {
         reader = new BufferedReader(new FileReader(filePath));
@@ -21,6 +21,9 @@ public class AnalizadorLexico {
 
     private void avanzar() throws IOException {
         currentChar = reader.read();
+        if (currentChar == -1) {
+            eofReached = true;
+        }
     }
 
     public Token escanear() throws IOException {
@@ -28,8 +31,8 @@ public class AnalizadorLexico {
             avanzar();
         }
 
-        if (currentChar == -1) {
-            return new Token(TokenType.EOF, ".");
+        if (eofReached) {
+            return new Token(TokenType.EOF, "EOF");
         }
 
         if (Character.isLetter((char) currentChar)) {
@@ -38,11 +41,11 @@ public class AnalizadorLexico {
                 identificador.append((char) currentChar);
                 avanzar();
             }
-            String lexema = identificador.toString();
+            String lexema = identificador.toString().toLowerCase(); // Convertir a minúsculas
             if (PALABRAS_RESERVADAS.contains(lexema)) {
                 return new Token(TokenType.PALABRA_RESERVADA, lexema);
             } else {
-                return new Token(TokenType.IDENTIFICADOR, lexema);
+                return new Token(TokenType.IDENTIFICADOR, identificador.toString());
             }
         }
 
@@ -53,6 +56,27 @@ public class AnalizadorLexico {
                 avanzar();
             }
             return new Token(TokenType.NUMERO, numero.toString());
+        }
+
+        if (currentChar == '\'') {
+            StringBuilder cadena = new StringBuilder();
+            avanzar();
+            while (currentChar != '\'' && currentChar != -1 && currentChar != '\n') {
+                cadena.append((char) currentChar);
+                avanzar();
+            }
+            if (currentChar == '\'') {
+                avanzar();
+                return new Token(TokenType.CADENA, cadena.toString());
+            } else {
+                cadena.append((char) currentChar); // Añadir el salto de línea si es necesario
+                avanzar();
+                while (currentChar != -1 && currentChar != '\n') { // Leer hasta el final de la línea
+                    cadena.append((char) currentChar);
+                    avanzar();
+                }
+                return new Token(TokenType.NUL, cadena.toString());
+            }
         }
 
         switch (currentChar) {
@@ -83,6 +107,9 @@ public class AnalizadorLexico {
                 } else {
                     return new Token(TokenType.MAYOR, ">");
                 }
+            case '=':
+                avanzar();
+                return new Token(TokenType.COMPARAR, "=");
             case '+':
                 avanzar();
                 return new Token(TokenType.SUMA, "+");
@@ -109,7 +136,8 @@ public class AnalizadorLexico {
                 return new Token(TokenType.COMA, ",");
             case '.':
                 avanzar();
-                return new Token(TokenType.EOF, ".");
+                    return new Token(TokenType.PUNTO, ".");
+                
             default:
                 throw new RuntimeException("Carácter inesperado: " + (char) currentChar);
         }
