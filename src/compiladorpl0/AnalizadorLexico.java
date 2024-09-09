@@ -139,7 +139,7 @@ public class AnalizadorLexico {
                     return new Token(TokenType.PUNTO, ".");
                 
             default:
-                throw new RuntimeException("Carácter inesperado: " + (char) currentChar);
+                throw new RuntimeException("Caracter inesperado: " + (char) currentChar);
         }
     }
 

@@ -1,5 +1,5 @@
 var x,y;
 begin
 	readln(x,y);
-	whriteln(x+y);
+	writeln(x+y);
 end.

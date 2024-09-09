@@ -13,11 +13,12 @@ public class Token {
         return tipo;
     }
 
+    public String getValor() {
+        return valor;
+    }
+    
     @Override
     public String toString() {
-        return  "Token{" +
-                "tipo=" + tipo +
-                ", valor='" + valor + '\''+
-                '}';
+        return  "Token{" + "tipo=" + tipo + ", valor='" + valor + '\'' + '}';
     }
 }
