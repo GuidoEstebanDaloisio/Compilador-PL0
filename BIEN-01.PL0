@@ -20,5 +20,4 @@ BEGIN
      CALL POT;
      IF EXPO < 0 THEN RESU := 0;
      WRITELN ('RESULTADO: ', RESU);
-	 writeln
 END.

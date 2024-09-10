@@ -29,5 +29,4 @@ Begin
   write ('Y: '); readLn (Y);
   call MULTIPLICAR;
   writeLn ('X*Y=', Z);
-  writeln;
 end.

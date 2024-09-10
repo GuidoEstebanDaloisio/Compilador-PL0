@@ -76,8 +76,6 @@ begin
   if VUELTOCENTAVOS < 10 then write ('0');
   writeLn (VUELTOCENTAVOS);
 
-  writeLn;
-
   if VUELTO >= 5000 then
     begin
       writeLn ('1 billete de US$ 50');
@@ -143,6 +141,4 @@ begin
 
   if VUELTO > 1 then writeLn (VUELTO, ' monedas de 1 centavo de US$');
   if VUELTO = 1 then writeLn ('1 moneda de 1 centavo de US$');
-
-  writeln
 end.

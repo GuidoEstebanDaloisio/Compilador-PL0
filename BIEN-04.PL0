@@ -28,5 +28,4 @@ begin
           writeln ('MCD: ', Z)
         end
     end;
-	writeln
 end.

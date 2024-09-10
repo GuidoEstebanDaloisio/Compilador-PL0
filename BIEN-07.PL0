@@ -25,5 +25,4 @@ begin
   K := 1;
   call P;
   writeln (10);
-  writeln
 end.

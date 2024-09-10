@@ -16,5 +16,4 @@ begin
   write ('NUM='); readln (Y);
   call INICIAR;
   writeln ('NUM*2=',Y*X);
-  writeln
 end.
