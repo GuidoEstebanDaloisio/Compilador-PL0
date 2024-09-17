@@ -1,0 +1,10 @@
+var X;
+procedure P;
+var x;
+begin
+	x:=5;
+end;
+begin
+	call p;
+	writeln(5)
+end.

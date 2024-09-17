@@ -1,4 +1,5 @@
 package compiladorpl0;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -7,10 +8,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class AnalizadorLexico {
+
     private final BufferedReader reader;
     private int currentChar;
     private static final Set<String> PALABRAS_RESERVADAS = new HashSet<>(Arrays.asList(
-        "const", "var", "procedure", "call", "begin", "end", "if", "then", "while", "do", "odd", "readln", "writeln", "write"
+            "const", "var", "procedure", "call", "begin", "end", "if", "then", "while", "do", "odd", "readln", "writeln", "write"
     ));
     private boolean eofReached = false;
 
@@ -23,6 +25,8 @@ public class AnalizadorLexico {
         currentChar = reader.read();
         if (currentChar == -1) {
             eofReached = true;
+        } else {
+            System.out.print((char) currentChar);
         }
     }
 
@@ -136,8 +140,8 @@ public class AnalizadorLexico {
                 return new Token(TokenType.COMA, ",");
             case '.':
                 avanzar();
-                    return new Token(TokenType.PUNTO, ".");
-                
+                return new Token(TokenType.PUNTO, ".");
+
             default:
                 throw new RuntimeException("Caracter inesperado: " + (char) currentChar);
         }

@@ -1,5 +1,6 @@
 package compiladorpl0;
 
+import static compiladorpl0.Errores.*;
 import static compiladorpl0.TokenType.*;
 import java.io.IOException;
 
@@ -15,15 +16,17 @@ public class AnalizadorSintactico {
 
     private void avanzar() throws IOException {
         tokenActual = lex.escanear();
-        System.out.println(tokenActual.getValor());
+        //System.out.println(tokenActual.getValor());
     }
 
     public void analizarPrograma() throws IOException {
         analizarBloque();
         if (tokenActual.getTipo() != TokenType.PUNTO) {
-            throw new RuntimeException("Error sintactico: Se esperaba un '.' al final del programa");
+            System.out.println(ERR_SINT_FALTA_PUNTO_FINAL);
+            System.exit(0);
+
         }
-        System.out.println("--Programa valido--");
+        System.out.println("\n--Programa valido--");
     }
 
     private void analizarBloque() throws IOException {
@@ -50,7 +53,7 @@ public class AnalizadorSintactico {
         avanzar(); // Saltar "const"
         analizarIdentificador(); // Debe seguir un identificador
         if (tokenActual.getTipo() != TokenType.COMPARAR) {
-            System.out.println("Error sintactico: Se esperaba '=' en la declaracion de constante");
+            System.out.println(ERR_SINT_FALTA_IGUAL_EN_CONSTANTE);
             System.exit(0);
         }
         avanzar(); // Saltar "="
@@ -59,14 +62,14 @@ public class AnalizadorSintactico {
             avanzar(); // Saltar ","
             analizarIdentificador();
             if (tokenActual.getTipo() != TokenType.COMPARAR) {
-                System.out.println("Error sintactico: Se esperaba '=' en la declaracion de constante");
+                System.out.println(ERR_SINT_FALTA_IGUAL_EN_CONSTANTE);
                 System.exit(0);
             }
             avanzar(); // Saltar "="
             analizarNumero();
         }
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
-            System.out.println("Error sintactico: Se esperaba ';' al final de la declaracion de constantes");
+            System.out.println(ERR_SINT_FALTA_PUNTO_Y_COMA_EN_CONSTANTE);
             System.exit(0);
         }
         avanzar(); // Saltar ";"
@@ -80,7 +83,7 @@ public class AnalizadorSintactico {
             analizarIdentificador();
         }
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
-            System.out.println("Error sintactico: Se esperaba ';' al final de la declaracion de variables");
+            System.out.println(ERR_SINT_FALTA_PUNTO_Y_COMA_EN_VARIABLE);
             System.exit(0);
         }
         avanzar(); // Saltar ";"
@@ -90,13 +93,13 @@ public class AnalizadorSintactico {
         avanzar(); // Saltar "procedure"
         analizarIdentificador();
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
-            System.out.println("Error sintactico: Se esperaba ';' después de la declaracion del procedimiento");
+            System.out.println(ERR_SINT_FALTA_PUNTO_Y_COMA_EN_PROCEDIMIENTO);
             System.exit(0);
         }
         avanzar(); // Saltar ";"
         analizarBloque();
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
-            System.out.println("Error sintactico: Se esperaba ';' al final de la declaracion del procedimiento");
+            System.out.println(ERR_SINT_FALTA_PUNTO_Y_COMA_FINAL_EN_PROCEDIMIENTO);
             System.exit(0);
 
         }
@@ -111,7 +114,7 @@ public class AnalizadorSintactico {
                     avanzar(); // Saltar ":="
                     analizarExpresion();
                 } else {
-                    System.out.println("Error sintactico: Se esperaba ':=' en la proposicion");
+                    System.out.println(ERR_SINT_FALTA_DOS_PUNTOS_IGUAL_EN_PROPOSICION);
                     System.exit(0);
                 }
                 break;
@@ -129,7 +132,7 @@ public class AnalizadorSintactico {
                             analizarProposicion(); // Análisis de proposiciones adicionales
                         }
                         if (tokenActual.getTipo() != TokenType.PALABRA_RESERVADA || !tokenActual.getValor().equals("end")) {
-                            System.out.println("Error sintactico: Se esperaba 'end' al final del bloque");
+                            System.out.println(ERR_SINT_FALTA_END_EN_BLOQUE);
                             System.exit(0);
                         }
                         avanzar(); // Saltar "end"
@@ -138,7 +141,7 @@ public class AnalizadorSintactico {
                         avanzar(); // Saltar "if"
                         analizarCondicion();
                         if (tokenActual.getTipo() != TokenType.PALABRA_RESERVADA || !tokenActual.getValor().equals("then")) {
-                            System.out.println("Error sintactico: Se esperaba 'then' después de la condicion");
+                            System.out.println(ERR_SINT_FALTA_THEN_EN_CONDICION);
                             System.exit(0);
                         }
                         avanzar(); // Saltar "then"
@@ -148,7 +151,7 @@ public class AnalizadorSintactico {
                         avanzar(); // Saltar "while"
                         analizarCondicion();
                         if (tokenActual.getTipo() != TokenType.PALABRA_RESERVADA || !tokenActual.getValor().equals("do")) {
-                            System.out.println("Error sintactico: Se esperaba 'do' después de la condicion");
+                            System.out.println(ERR_SINT_FALTA_DO_EN_CONDICION);
                             System.exit(0);
                         }
                         avanzar(); // Saltar "do"
@@ -165,12 +168,12 @@ public class AnalizadorSintactico {
                                 analizarIdentificador(); // Leer identificador adicional
                             }
                             if (tokenActual.getTipo() != TokenType.PARENTESIS_DER) {
-                                System.out.println("Error sintactico: Se esperaba ')'");
+                                System.out.println(ERR_SINT_FALTA_PARENTESIS_DER);
                                 System.exit(0);
                             }
                             avanzar(); // Saltar ")"
                         } else {
-                            System.out.println("Error sintactico: Se esperaba '(' después de 'readln'");
+                            System.out.println(ERR_SINT_FALTA_PARENTESIS_IZQ_EN_READLN);
                             System.exit(0);
                         }
                         break;
@@ -185,12 +188,12 @@ public class AnalizadorSintactico {
                                 analizarCadenaOExpresion(); // Leer cadena o expresión adicional
                             }
                             if (tokenActual.getTipo() != TokenType.PARENTESIS_DER) {
-                                System.out.println("Error sintactico: Se esperaba ')'");
+                                System.out.println(ERR_SINT_FALTA_PARENTESIS_DER);
                                 System.exit(0);
                             }
                             avanzar(); // Saltar ")"
                         } else {
-                            System.out.println("Error sintactico: Se esperaba '(' despues de 'writeln'");
+                            System.out.println(ERR_SINT_FALTA_PARENTESIS_IZQ_EN_WRITELN);
                             System.exit(0);
                         }
                         break;
@@ -205,12 +208,12 @@ public class AnalizadorSintactico {
                                 analizarCadenaOExpresion(); // Leer cadena o expresión adicional
                             }
                             if (tokenActual.getTipo() != TokenType.PARENTESIS_DER) {
-                                System.out.println("Error sintactico: Se esperaba ')'");
+                                System.out.println(ERR_SINT_FALTA_PARENTESIS_DER);
                                 System.exit(0);
                             }
                             avanzar(); // Saltar ")"
                         } else {
-                            System.out.println("Error sintactico: Se esperaba '(' despues de 'write'");
+                            System.out.println(ERR_SINT_FALTA_PARENTESIS_IZQ_EN_WRITE);
                             System.exit(0);
                         }
                         break;
@@ -271,7 +274,7 @@ public class AnalizadorSintactico {
                 avanzar(); // Saltar "("
                 analizarExpresion();
                 if (tokenActual.getTipo() != TokenType.PARENTESIS_DER) {
-                    System.out.println("Error sintactico: Se esperaba ')'");
+                    System.out.println(ERR_SINT_FALTA_PARENTESIS_DER);
                     System.exit(0);
                 }
                 avanzar(); // Saltar ")"
@@ -300,7 +303,7 @@ public class AnalizadorSintactico {
                 avanzar(); // Saltar el operador de comparación
                 analizarExpresion(); // Analizar la segunda expresión
             } else {
-                System.out.println("Error sintactico: Operador de comparación esperado en la condicion");
+                System.out.println(ERR_SINT_FALTA_OPERADOR_DE_COMPARACION);
                 System.exit(0);
             }
         }
@@ -308,7 +311,7 @@ public class AnalizadorSintactico {
 
     private void analizarIdentificador() throws IOException {
         if (tokenActual.getTipo() != TokenType.IDENTIFICADOR) {
-            System.out.println("Error sintactico: Se esperaba un identificador");
+            System.out.println(ERR_SINT_FALTA_IDENTIFICADOR);
             System.exit(0);
         }
         avanzar(); // Saltar identificador
@@ -316,9 +319,8 @@ public class AnalizadorSintactico {
 
     private void analizarNumero() throws IOException {
         if (tokenActual.getTipo() != TokenType.NUMERO) {
-            System.out.println("Error sintactico: Se esperaba un número");
+            System.out.println(ERR_SINT_FALTA_NUMERO);
             System.exit(0);
-
         }
         avanzar(); // Saltar número
     }
