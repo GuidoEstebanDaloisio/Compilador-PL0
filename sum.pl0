@@ -1,5 +1,11 @@
-var x,y;
+const h = 8;
+var X;
+procedure P;
+var f;
 begin
-	readln(x,y);
-	writeln(x+y);
-end.
+	f:=4
+end;
+begin
+	call f
+end
+.

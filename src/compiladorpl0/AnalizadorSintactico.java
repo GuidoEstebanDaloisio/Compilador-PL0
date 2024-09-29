@@ -1,16 +1,19 @@
 package compiladorpl0;
 
 import static compiladorpl0.Errores.*;
+import static compiladorpl0.IdentType.*;
 import static compiladorpl0.TokenType.*;
 import java.io.IOException;
 
 public class AnalizadorSintactico {
 
     private final AnalizadorLexico lex;
+    private final AnalizadorSemantico semantico;
     private Token tokenActual;
 
     public AnalizadorSintactico(AnalizadorLexico lex) throws IOException {
         this.lex = lex;
+        this.semantico = new AnalizadorSemantico();
         avanzar(); // Para obtener el primer token
     }
 
@@ -20,7 +23,7 @@ public class AnalizadorSintactico {
     }
 
     public void analizarPrograma() throws IOException {
-        analizarBloque();
+        analizarBloque(0);
         if (tokenActual.getTipo() != TokenType.PUNTO) {
             System.out.println(ERR_SINT_FALTA_PUNTO_FINAL);
             System.exit(0);
@@ -29,87 +32,129 @@ public class AnalizadorSintactico {
         System.out.println("\n--Programa valido--");
     }
 
-    private void analizarBloque() throws IOException {
+    private void analizarBloque(int base) throws IOException {
+        int desplazamiento = 0;
+
         // Verificar si el bloque comienza con una declaración de constantes
         if (tokenActual.getTipo() == TokenType.PALABRA_RESERVADA && tokenActual.getValor().equals("const")) {
-            analizarDeclaracionConstantes();
+            desplazamiento = analizarDeclaracionConstantes(base, desplazamiento);
         }
 
         // Después de constantes, puede seguir una declaración de variables
         if (tokenActual.getTipo() == TokenType.PALABRA_RESERVADA && tokenActual.getValor().equals("var")) {
-            analizarDeclaracionVariables();
+            desplazamiento = analizarDeclaracionVariables(base, desplazamiento);
         }
 
         // Después de variables, puede seguir una declaración de procedimientos
         while (tokenActual.getTipo() == TokenType.PALABRA_RESERVADA && tokenActual.getValor().equals("procedure")) {
-            analizarDeclaracionProcedimientos();
+            desplazamiento = analizarDeclaracionProcedimientos(base, desplazamiento);
         }
 
         // Finalmente, debe analizarse una proposición
-        analizarProposicion();
+        analizarProposicion(base, desplazamiento);
     }
 
-    private void analizarDeclaracionConstantes() throws IOException {
+    private int analizarDeclaracionConstantes(int base, int desplazamiento) throws IOException {
         avanzar(); // Saltar "const"
         analizarIdentificador(); // Debe seguir un identificador
+
+        semantico.registrarIdentificador(tokenActual, CONST, base, desplazamiento);
+        desplazamiento++;
+        Token identReciente = tokenActual;
+        avanzar(); // Saltar identificador
+
         if (tokenActual.getTipo() != TokenType.COMPARAR) {
             System.out.println(ERR_SINT_FALTA_IGUAL_EN_CONSTANTE);
             System.exit(0);
         }
         avanzar(); // Saltar "="
         analizarNumero(); // Debe seguir un número
+        semantico.asignarValor(identReciente.getValor(), Integer.parseInt(tokenActual.getValor()), base, desplazamiento);
+        avanzar(); // Saltar número
+
         while (tokenActual.getTipo() == TokenType.COMA) {
             avanzar(); // Saltar ","
             analizarIdentificador();
+
+            semantico.registrarIdentificador(tokenActual, CONST, base, desplazamiento);
+            desplazamiento++;
+            identReciente = tokenActual;
+            avanzar(); // Saltar identificador
+
             if (tokenActual.getTipo() != TokenType.COMPARAR) {
                 System.out.println(ERR_SINT_FALTA_IGUAL_EN_CONSTANTE);
                 System.exit(0);
             }
             avanzar(); // Saltar "="
             analizarNumero();
+            semantico.asignarValor(identReciente.getValor(), Integer.parseInt(tokenActual.getValor()), base, desplazamiento);
+            avanzar(); // Saltar número
         }
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
             System.out.println(ERR_SINT_FALTA_PUNTO_Y_COMA_EN_CONSTANTE);
             System.exit(0);
         }
         avanzar(); // Saltar ";"
+        return desplazamiento;
     }
 
-    private void analizarDeclaracionVariables() throws IOException {
+    private int analizarDeclaracionVariables(int base, int desplazamiento) throws IOException {
         avanzar(); // Saltar "var"
         analizarIdentificador();
+
+        semantico.registrarIdentificador(tokenActual, VAR, base, desplazamiento);
+        desplazamiento++;
+        avanzar(); // Saltar identificador
+
         while (tokenActual.getTipo() == TokenType.COMA) {
             avanzar(); // Saltar ","
             analizarIdentificador();
+
+            semantico.registrarIdentificador(tokenActual, VAR, base, desplazamiento);
+            desplazamiento++;
+            avanzar(); // Saltar identificador
         }
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
             System.out.println(ERR_SINT_FALTA_PUNTO_Y_COMA_EN_VARIABLE);
             System.exit(0);
         }
         avanzar(); // Saltar ";"
+        return desplazamiento;
     }
 
-    private void analizarDeclaracionProcedimientos() throws IOException {
+    private int analizarDeclaracionProcedimientos(int base, int desplazamiento) throws IOException {
         avanzar(); // Saltar "procedure"
         analizarIdentificador();
+        
+        semantico.registrarIdentificador(tokenActual, PROCEDURE, base, desplazamiento);
+        desplazamiento++;
+        avanzar(); // Saltar identificador
+        
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
             System.out.println(ERR_SINT_FALTA_PUNTO_Y_COMA_EN_PROCEDIMIENTO);
             System.exit(0);
         }
         avanzar(); // Saltar ";"
-        analizarBloque();
+        analizarBloque(base+desplazamiento);
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
             System.out.println(ERR_SINT_FALTA_PUNTO_Y_COMA_FINAL_EN_PROCEDIMIENTO);
             System.exit(0);
 
         }
         avanzar(); // Saltar ";"
+        return desplazamiento;
     }
 
-    private void analizarProposicion() throws IOException {
+    private void analizarProposicion(int base, int desplazamiento) throws IOException {
         switch (tokenActual.getTipo()) {
             case IDENTIFICADOR:
+                
+                //Para una asignacion de este tipo solo puede ser con un identificador var
+                //Si lo es seguirá de largo y sino lanzara el error el analizador semantico              
+                semantico.validarQueEsIdentificadorVarDeclarado(tokenActual.getValor(), base, desplazamiento);
+                
                 avanzar();
+                
                 if (tokenActual.getTipo() == TokenType.ASIGNACION) {
                     avanzar(); // Saltar ":="
                     analizarExpresion();
@@ -123,13 +168,17 @@ public class AnalizadorSintactico {
                     case "call":
                         avanzar(); // Saltar "call"
                         analizarIdentificador();
+                        
+                        semantico.validarQueEsIdentificadorProcedureDeclarado(tokenActual.getValor(), base, desplazamiento);
+                        
+                        avanzar(); // Saltar identificador
                         break;
                     case "begin":
                         avanzar(); // Saltar "begin"
-                        analizarProposicion(); // Análisis de la primera proposición
+                        analizarProposicion(base, desplazamiento); // Análisis de la primera proposición
                         while (tokenActual.getTipo() == TokenType.PUNTO_Y_COMA) {
                             avanzar(); // Saltar ";"
-                            analizarProposicion(); // Análisis de proposiciones adicionales
+                            analizarProposicion(base, desplazamiento); // Análisis de proposiciones adicionales
                         }
                         if (tokenActual.getTipo() != TokenType.PALABRA_RESERVADA || !tokenActual.getValor().equals("end")) {
                             System.out.println(ERR_SINT_FALTA_END_EN_BLOQUE);
@@ -145,7 +194,7 @@ public class AnalizadorSintactico {
                             System.exit(0);
                         }
                         avanzar(); // Saltar "then"
-                        analizarProposicion();
+                        analizarProposicion(base, desplazamiento);
                         break;
                     case "while":
                         avanzar(); // Saltar "while"
@@ -155,7 +204,7 @@ public class AnalizadorSintactico {
                             System.exit(0);
                         }
                         avanzar(); // Saltar "do"
-                        analizarProposicion();
+                        analizarProposicion(base, desplazamiento);
                         break;
 
                     case "readln":
@@ -163,9 +212,14 @@ public class AnalizadorSintactico {
                         if (tokenActual.getTipo() == TokenType.PARENTESIS_IZQ) {
                             avanzar(); // Saltar "("
                             analizarIdentificador(); // Leer identificador
+                            
+                            semantico.validarQueEsIdentificadorVarDeclarado(tokenActual.getValor(), base, desplazamiento);
+                            
+                            avanzar(); // Saltar identificador
                             while (tokenActual.getTipo() == TokenType.COMA) {
                                 avanzar(); // Saltar ","
                                 analizarIdentificador(); // Leer identificador adicional
+                                avanzar(); // Saltar identificador
                             }
                             if (tokenActual.getTipo() != TokenType.PARENTESIS_DER) {
                                 System.out.println(ERR_SINT_FALTA_PARENTESIS_DER);
@@ -266,9 +320,12 @@ public class AnalizadorSintactico {
         switch (tokenActual.getTipo()) {
             case IDENTIFICADOR:
                 analizarIdentificador();
+                //semantico.validarQueEsIdentificadorConstOVar(tokenActual.getValor(), base, desplazamiento);
+                avanzar(); // Saltar identificador
                 break;
             case NUMERO:
                 analizarNumero();
+                avanzar(); // Saltar número
                 break;
             case PARENTESIS_IZQ:
                 avanzar(); // Saltar "("
@@ -314,7 +371,7 @@ public class AnalizadorSintactico {
             System.out.println(ERR_SINT_FALTA_IDENTIFICADOR);
             System.exit(0);
         }
-        avanzar(); // Saltar identificador
+        //avanzar(); // Saltar identificador
     }
 
     private void analizarNumero() throws IOException {
@@ -322,6 +379,6 @@ public class AnalizadorSintactico {
             System.out.println(ERR_SINT_FALTA_NUMERO);
             System.exit(0);
         }
-        avanzar(); // Saltar número
+        //avanzar(); // Saltar número
     }
 }

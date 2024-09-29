@@ -1,10 +1,10 @@
-var X;
+var x;
 procedure P;
 var x;
 begin
 	x:=5;
 end;
 begin
-	call p;
+	call P;
 	writeln(5)
 end.

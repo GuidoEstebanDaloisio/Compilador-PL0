@@ -4,7 +4,7 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
-        String filePath = "MAL-00.pl0"; // Ruta del archivo definida manualmente
+        String filePath = "sum.pl0"; // Ruta del archivo definida manualmente
         AnalizadorLexico alex = null;
         AnalizadorSintactico parser = null;
 

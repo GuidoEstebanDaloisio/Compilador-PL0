@@ -14,10 +14,19 @@ public class Errores {
     static String ERR_SINT_FALTA_THEN_EN_CONDICION = "Error sintactico: Se esperaba 'then' después de la condicion";
     static String ERR_SINT_FALTA_DO_EN_CONDICION = "Error sintactico: Se esperaba 'do' después de la condicion";
     static String ERR_SINT_FALTA_PARENTESIS_DER = "Error sintactico: Se esperaba ')'";
-    static String ERR_SINT_FALTA_PARENTESIS_IZQ_EN_READLN = "Error sintactico: Se esperaba '(' después de 'readln'";
+    static String ERR_SINT_FALTA_PARENTESIS_IZQ_EN_READLN = "Error sintactico: Se esperaba '(' despues de 'readln'";
     static String ERR_SINT_FALTA_PARENTESIS_IZQ_EN_WRITELN = "Error sintactico: Se esperaba '(' despues de 'writeln''";
     static String ERR_SINT_FALTA_PARENTESIS_IZQ_EN_WRITE = "Error sintactico: Se esperaba '(' despues de 'write''";  
-    static String ERR_SINT_FALTA_OPERADOR_DE_COMPARACION ="Error sintactico: Operador de comparación esperado en la condicion";
+    static String ERR_SINT_FALTA_OPERADOR_DE_COMPARACION ="Error sintactico: Operador de comparacion esperado en la condicion";
     static String ERR_SINT_FALTA_IDENTIFICADOR = "Error sintactico: Se esperaba un identificador";
-    static String ERR_SINT_FALTA_NUMERO = "Error sintactico: Se esperaba un número";
+    static String ERR_SINT_FALTA_NUMERO = "Error sintactico: Se esperaba un numero";
+    
+    //ERRORES SEMANTICOS
+    static String ERR_SEM_IDENTIFICADOR = "Error semantico: El identificador '";
+    static String ERR_SEM_YA_DECLARADO_EN_EL_BLOQUE = "' ya ha sido declarado en este bloque";
+    static String ERR_SEM_NO_FUE_DECLARADO = "' no ha sido declarado";
+    static String ERR_SEM_NO_ES_DEL_TIPO_ESPERADO = "' no es del tipo esperado";
+    static String ERR_SEM_CONST_ASIGNADA = "' es una constante a la que ya se le fue asignado un valor";    
+    static String ERR_SEM_CAPACIDAD_MAXIMA = "Capacidad máxima de identificadores alcanzada";
+   
 }
