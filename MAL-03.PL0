@@ -1,7 +1,7 @@
-var DO, X, Y, Q, R;
+var X, Y, Q, R;
 
 procedure DIVIDIR;
-var V W;
+var V, W;
 begin
   Q := 0;
   R := X; if R < 0 then R := -R;
@@ -30,22 +30,21 @@ call DIVIDIR;
 
 procedure SALIDA;
 begin
-  write ('Cociente: ', Q); writeln;
-  write ('Resto: ', R); writeln;
+  write ('Cociente: ', Q);
+  write ('Resto: ', R);
 end;
 
 begin
   write ('Dividendo: '); readln (X);
   write ('Divisor: '); readln (Y);
-  writeln;
   if Y <> 0 then
     begin
-      write ('Metodo 1'); writeln;
+      write ('Metodo 1'); 
       call DIVIDIR;
-      call SALIDA; writeln;
-      write ('Metodo 2'); writeln;
+      call SALIDA; 
+      write ('Metodo 2'); 
       call OTRO;
       call SALIDA;
     end
 end
-end
+.
