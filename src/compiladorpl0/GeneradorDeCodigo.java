@@ -1,5 +1,8 @@
 package compiladorpl0;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class GeneradorDeCodigo {
@@ -7,10 +10,56 @@ public class GeneradorDeCodigo {
     private ArrayList<Byte> memoria;
 
     public GeneradorDeCodigo() {
-        iniciarArchivo();
+        cargarParteDeLongitudFija();
     }
 
-    private void iniciarArchivo() {
+    private void crearArchivo(String nombre) {
+        File archivo = new File(nombre);
+        try {
+            if (archivo.createNewFile()) {
+                System.out.println("Archivo creado: " + archivo.getName());
+            } else {
+                System.out.println("El archivo ya existe.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void cargarByte(int byteACargar) {
+        //recive en hexa
+        //castea el entero a tipo byte
+    }
+
+    public void cargarInt(int enteroACargar) {
+        //recive en hexa        
+        //no se castea pero se descompone para cargarlo en el vector
+        //para ello se divide por 16 al cuadrado, haciendo que (como en hexa es 100, osea que se divide por 100)
+        //con eso corre la coma 2 lugares. Esto sirve para numeros largos
+    }
+
+    public void cargarByteEn(int byteACargar, int ubicacion) {
+
+    }
+
+    public void cargarIntEn(int intACargar, int ubicacion) {
+
+    }
+
+    //Se usaria con el punto final en el analizador sintactico
+    public void volcarMemoriaEnArchivo(String nombreArchivo) {
+        try (FileOutputStream archivo = new FileOutputStream(nombreArchivo)) {
+            for (Byte b : memoria) {
+                archivo.write(b);
+            }
+            archivo.flush(); // Asegurarse de que todos los datos se escriban
+            System.out.println("Memoria volcada al archivo: " + nombreArchivo);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void cargarParteDeLongitudFija() {
         memoria = new ArrayList<>();
         memoria.add(((byte) 0x4D));
         memoria.add(((byte) 0x5A));

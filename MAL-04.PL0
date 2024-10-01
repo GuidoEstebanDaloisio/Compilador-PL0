@@ -1,6 +1,6 @@
-var X, Y Z;
+var X, Y, Z;
 
-procedure MCD
+procedure MCD;
 var F,G;
 begin
   F := X; G := Y;
@@ -13,14 +13,14 @@ begin
 end;
 
 begin
-  do write ('X: '); readln (X);
+   write ('X: '); readln (X);
   if X > 0 then
     begin
       write ('Y: '); readln (Y);
       if Y > 0 then
         begin
           call MCD;
-          writeln ('MCD: ', Z); writeln ()
+          writeln ('MCD: ', Z);
         end
     end
 end.

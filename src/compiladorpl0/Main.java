@@ -3,14 +3,17 @@ package compiladorpl0;
 import java.io.IOException;
 
 public class Main {
-    public static void main(String[] args) {
-        String filePath = "MAL-03.pl0"; // Ruta del archivo definida manualmente
-        AnalizadorLexico alex = null;
-        AnalizadorSintactico parser = null;
+
+    public static void main(String[] args) throws IOException {
+        String filePath = "MAL-06.pl0"; // Ruta del archivo definida manualmente
+        AnalizadorLexico alex = new AnalizadorLexico(filePath);
+        AnalizadorSemantico semantico = new AnalizadorSemantico();
+        GeneradorDeCodigo genCod = new GeneradorDeCodigo();
 
         try {
-            alex = new AnalizadorLexico(filePath);
-            parser = new AnalizadorSintactico(alex);
+
+            AnalizadorSintactico parser = new AnalizadorSintactico(alex, semantico, genCod);
+
             parser.analizarPrograma(); // Inicia el análisis sintáctico
         } catch (IOException e) {
             System.err.println("Error al leer el archivo: " + e.getMessage());

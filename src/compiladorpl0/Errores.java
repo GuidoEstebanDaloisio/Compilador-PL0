@@ -7,7 +7,7 @@ public class Errores {
     static String ERR_SINT_FALTA_IGUAL_EN_CONSTANTE = "\nError sintactico: Se esperaba '=' en la declaracion de constante";
     static String ERR_SINT_FALTA_PUNTO_Y_COMA_EN_CONSTANTE = "\nError sintactico: Se esperaba ';' al final de la declaracion de constantes";
     static String ERR_SINT_FALTA_PUNTO_Y_COMA_EN_VARIABLE = "\nError sintactico: Se esperaba ';' al final de la declaracion de variables";
-    static String ERR_SINT_FALTA_PUNTO_Y_COMA_EN_PROCEDIMIENTO = "\nError sintactico: Se esperaba ';' después de la declaracion del procedimiento";
+    static String ERR_SINT_FALTA_PUNTO_Y_COMA_EN_PROCEDIMIENTO = "\nError sintactico: Se esperaba ';' despues de la declaracion del procedimiento";
     static String ERR_SINT_FALTA_PUNTO_Y_COMA_FINAL_EN_PROCEDIMIENTO = "\nError sintactico: Se esperaba ';' al final de la declaracion del procedimiento";
     static String ERR_SINT_FALTA_DOS_PUNTOS_IGUAL_EN_PROPOSICION = "\nError sintactico: Se esperaba ':=' en la proposicion";
     static String ERR_SINT_FALTA_END_EN_BLOQUE = "\nError sintactico: Se esperaba 'end' al final del bloque";
@@ -20,6 +20,7 @@ public class Errores {
     static String ERR_SINT_FALTA_OPERADOR_DE_COMPARACION ="\nError sintactico: Operador de comparacion esperado en la condicion";
     static String ERR_SINT_FALTA_IDENTIFICADOR = "\nError sintactico: Se esperaba un identificador";
     static String ERR_SINT_FALTA_NUMERO = "\nError sintactico: Se esperaba un numero";
+    static String ERR_SINT_FALTA_FACTOR = "\nError sintactico: Se esperaba un factor";
     
     //ERRORES SEMANTICOS
     static String ERR_SEM_IDENTIFICADOR = "\nError semantico: El identificador '";

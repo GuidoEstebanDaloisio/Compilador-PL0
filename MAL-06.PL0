@@ -45,7 +45,6 @@ begin
   WRITELN ('*******************************************');
   writeLn ('VUELTO PARA IMPORTES PAGADOS CON UN BILLETE');
   WRITELN ('*******************************************');
-  writeln;
   IMPORTEOK := -1;
   while IMPORTEOK <> 0 do
     begin

@@ -9,12 +9,17 @@ public class AnalizadorSintactico {
 
     private final AnalizadorLexico lex;
     private final AnalizadorSemantico semantico;
+    private final GeneradorDeCodigo genCod;
     private Token tokenActual;
 
-    public AnalizadorSintactico(AnalizadorLexico lex) throws IOException {
+
+
+    public AnalizadorSintactico(AnalizadorLexico lex, AnalizadorSemantico semantico, GeneradorDeCodigo genCod) throws IOException {
         this.lex = lex;
-        this.semantico = new AnalizadorSemantico();
+        this.semantico = semantico;
+        this.genCod = genCod;
         avanzar(); // Para obtener el primer token
+
     }
 
     private void avanzar() throws IOException {
@@ -30,6 +35,7 @@ public class AnalizadorSintactico {
 
         }
         System.out.println("\n--Programa valido--");
+        //genCod.volcarMemoriaEnArchivo();
     }
 
     private void analizarBloque(int base) throws IOException {
@@ -125,17 +131,17 @@ public class AnalizadorSintactico {
     private int analizarDeclaracionProcedimientos(int base, int desplazamiento) throws IOException {
         avanzar(); // Saltar "procedure"
         analizarIdentificador();
-        
+
         semantico.registrarIdentificador(tokenActual, PROCEDURE, base, desplazamiento);
         desplazamiento++;
         avanzar(); // Saltar identificador
-        
+
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
             System.out.println(ERR_SINT_FALTA_PUNTO_Y_COMA_EN_PROCEDIMIENTO);
             System.exit(0);
         }
         avanzar(); // Saltar ";"
-        analizarBloque(base+desplazamiento);
+        analizarBloque(base + desplazamiento);
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
             System.out.println(ERR_SINT_FALTA_PUNTO_Y_COMA_FINAL_EN_PROCEDIMIENTO);
             System.exit(0);
@@ -148,13 +154,13 @@ public class AnalizadorSintactico {
     private void analizarProposicion(int base, int desplazamiento) throws IOException {
         switch (tokenActual.getTipo()) {
             case IDENTIFICADOR:
-                
+
                 //Para una asignacion de este tipo solo puede ser con un identificador var
                 //Si lo es seguirá de largo y sino lanzara el error el analizador semantico              
                 semantico.validarQueEsIdentificadorVarDeclarado(tokenActual.getValor(), base, desplazamiento);
-                
+
                 avanzar();
-                
+
                 if (tokenActual.getTipo() == TokenType.ASIGNACION) {
                     avanzar(); // Saltar ":="
                     analizarExpresion();
@@ -168,9 +174,9 @@ public class AnalizadorSintactico {
                     case "call":
                         avanzar(); // Saltar "call"
                         analizarIdentificador();
-                        
+
                         semantico.validarQueEsIdentificadorProcedureDeclarado(tokenActual.getValor(), base, desplazamiento);
-                        
+
                         avanzar(); // Saltar identificador
                         break;
                     case "begin":
@@ -212,9 +218,9 @@ public class AnalizadorSintactico {
                         if (tokenActual.getTipo() == TokenType.PARENTESIS_IZQ) {
                             avanzar(); // Saltar "("
                             analizarIdentificador(); // Leer identificador
-                            
+
                             semantico.validarQueEsIdentificadorVarDeclarado(tokenActual.getValor(), base, desplazamiento);
-                            
+
                             avanzar(); // Saltar identificador
                             while (tokenActual.getTipo() == TokenType.COMA) {
                                 avanzar(); // Saltar ","
@@ -337,7 +343,7 @@ public class AnalizadorSintactico {
                 avanzar(); // Saltar ")"
                 break;
             default:
-                System.out.println("Error sintactico: Factor esperado");
+                System.out.println(ERR_SINT_FALTA_FACTOR);
                 System.exit(0);
         }
     }

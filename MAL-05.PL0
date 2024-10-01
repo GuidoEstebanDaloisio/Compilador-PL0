@@ -1,12 +1,11 @@
 VAR R, N;
 
 PROCEDURE INICIALIZAR;
-CONST UNO = ;
+CONST UNO = 1;
 R := -(-UNO);
 
 PROCEDURE RAIZ;
 BEGIN
-  CALL N;
   WHILE R * R < N DO R := R + 1
 END;
 
@@ -18,8 +17,7 @@ BEGIN
   IF N > 0 THEN
     BEGIN
       CALL RAIZ;
-      IF R* <>N THEN WRITE (R - 1, '..');
+      IF R <> N THEN WRITE (R - 1, '..');
       WRITE (R);
     END;
-  WRITELN
 END.
