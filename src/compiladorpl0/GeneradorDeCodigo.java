@@ -13,8 +13,12 @@ public class GeneradorDeCodigo {
         cargarParteDeLongitudFija();
     }
 
-    private void crearArchivo(String nombre) {
-        File archivo = new File(nombre);
+    private void crearArchivo(String nombreArchivo) {
+        
+        // Obtengo solo el nombre sin la extensión .PL0
+        nombreArchivo = nombreArchivo.substring(0, nombreArchivo.lastIndexOf("."));
+        
+        File archivo = new File(nombreArchivo);
         try {
             if (archivo.createNewFile()) {
                 System.out.println("Archivo creado: " + archivo.getName());
@@ -48,6 +52,12 @@ public class GeneradorDeCodigo {
 
     //Se usaria con el punto final en el analizador sintactico
     public void volcarMemoriaEnArchivo(String nombreArchivo) {
+        
+        // Obtengo solo el nombre sin la extensión .PL0
+        nombreArchivo = nombreArchivo.substring(0, nombreArchivo.lastIndexOf("."));
+        
+        crearArchivo(nombreArchivo);
+        
         try (FileOutputStream archivo = new FileOutputStream(nombreArchivo)) {
             for (Byte b : memoria) {
                 archivo.write(b);

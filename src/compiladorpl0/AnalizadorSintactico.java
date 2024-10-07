@@ -12,8 +12,6 @@ public class AnalizadorSintactico {
     private final GeneradorDeCodigo genCod;
     private Token tokenActual;
 
-
-
     public AnalizadorSintactico(AnalizadorLexico lex, AnalizadorSemantico semantico, GeneradorDeCodigo genCod) throws IOException {
         this.lex = lex;
         this.semantico = semantico;
@@ -27,7 +25,7 @@ public class AnalizadorSintactico {
         //System.out.println(tokenActual.getValor());
     }
 
-    public void analizarPrograma() throws IOException {
+    public void analizarPrograma(String nombreArchivo) throws IOException {
         analizarBloque(0);
         if (tokenActual.getTipo() != TokenType.PUNTO) {
             System.out.println(ERR_SINT_FALTA_PUNTO_FINAL);
@@ -35,7 +33,7 @@ public class AnalizadorSintactico {
 
         }
         System.out.println("\n--Programa valido--");
-        //genCod.volcarMemoriaEnArchivo();
+        genCod.volcarMemoriaEnArchivo(nombreArchivo);
     }
 
     private void analizarBloque(int base) throws IOException {
