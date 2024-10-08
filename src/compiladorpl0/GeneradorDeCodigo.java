@@ -14,10 +14,10 @@ public class GeneradorDeCodigo {
     }
 
     private void crearArchivo(String nombreArchivo) {
-        
+
         // Obtengo solo el nombre sin la extensión .PL0
         nombreArchivo = nombreArchivo.substring(0, nombreArchivo.lastIndexOf("."));
-        
+
         File archivo = new File(nombreArchivo);
         try {
             if (archivo.createNewFile()) {
@@ -31,15 +31,15 @@ public class GeneradorDeCodigo {
     }
 
     public void cargarByte(int byteACargar) {
-        //recive en hexa
-        //castea el entero a tipo byte
+        byte valorByte = (byte) byteACargar; // Casteo a byte
+        memoria.add(valorByte);
     }
 
     public void cargarInt(int enteroACargar) {
-        //recive en hexa        
-        //no se castea pero se descompone para cargarlo en el vector
-        //para ello se divide por 16 al cuadrado, haciendo que (como en hexa es 100, osea que se divide por 100)
-        //con eso corre la coma 2 lugares. Esto sirve para numeros largos
+        for (int i = 0; i < 4; i++) {  // Se asume que el entero tiene 4 bytes
+            int byteValue = (enteroACargar >> (i * 8)) & 0xFF; // Extrae el byte correspondiente
+            cargarByte(byteValue); // Agrega el byte a la memoria
+        }
     }
 
     public void cargarByteEn(int byteACargar, int ubicacion) {
@@ -52,12 +52,12 @@ public class GeneradorDeCodigo {
 
     //Se usaria con el punto final en el analizador sintactico
     public void volcarMemoriaEnArchivo(String nombreArchivo) {
-        
+
         // Obtengo solo el nombre sin la extensión .PL0
         nombreArchivo = nombreArchivo.substring(0, nombreArchivo.lastIndexOf("."));
-        
+
         crearArchivo(nombreArchivo);
-        
+
         try (FileOutputStream archivo = new FileOutputStream(nombreArchivo)) {
             for (Byte b : memoria) {
                 archivo.write(b);
