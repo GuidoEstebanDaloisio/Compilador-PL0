@@ -13,6 +13,7 @@ public class GeneradorDeCodigo {
         cargarParteDeLongitudFija();
     }
 
+    
     private void crearArchivo(String nombreArchivo) {
 
         // Obtengo solo el nombre sin la extensión .PL0
@@ -43,11 +44,15 @@ public class GeneradorDeCodigo {
     }
 
     public void cargarByteEn(int byteACargar, int ubicacion) {
-
+        byte valorByte = (byte) byteACargar;
+        memoria.set(ubicacion, valorByte);
     }
 
     public void cargarIntEn(int intACargar, int ubicacion) {
-
+        for (int i = 0; i < 4; i++) {
+            int byteValue = (intACargar >> (i * 8)) & 0xFF; // Extrae el byte correspondiente
+            cargarByteEn(byteValue, ubicacion + i); // Carga cada byte en la posición específica
+        }
     }
 
     //Se usaria con el punto final en el analizador sintactico
