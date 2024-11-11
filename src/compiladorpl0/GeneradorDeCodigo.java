@@ -8,17 +8,444 @@ import java.util.ArrayList;
 public class GeneradorDeCodigo {
 
     private ArrayList<Byte> memoria;
+    private int EDI;
+    private int finalDeCodigoCargado;
 
     public GeneradorDeCodigo() {
         cargarParteDeLongitudFija();
     }
 
-    
+    public int getSize() {
+        return memoria.size();
+    }
+
+    public void finalDePrograma(int cantVariables) {
+        System.out.println("---------------------- FINAL DE PROGRAMA ----------------------");
+        this.finalDeCodigoCargado = getSize();
+
+        actualizarHeader(); // 0 - Actualizar Header
+        fixupEDI(); // 1 - Actualizar EDI
+        reservarMemoriaParaVariables(cantVariables); // 2 - Reservar memoria para variables
+        actualizarVirtualSize(); // 3 - Actualizar VirtualSize
+        rellenarMultiploDeFileAlignment(); // 4 - Rellenar con 0 múltiplo de FileAlignment
+        ajustarSizoOfCodeSection(); // 5 - Ajustar SizeOfCodeSection
+        ajustarSizeOfRawData(); // 5 - Ajustar SizeOfRawData
+        ajustarSizeOfImage(); // 6 - Ajustar SizeOfImage
+        ajustarSizeOfData(); // 6 - Ajustar BaseOfData
+
+        int programaFinalizado = getSize();
+
+        System.out.println("\n--------- Programa finalizado en " + programaFinalizado + " bytes (" + toHexa(programaFinalizado) + ") ---------");
+    }
+
+    private void actualizarHeader() {
+        System.out.println("\n0. Cargando tamaño de programa en HEADER " + finalDeCodigoCargado + " bytes (" + toHexa(finalDeCodigoCargado) + ")\n");
+        int distancia = Constantes.FINALIZAR_PROGRAMA - (finalDeCodigoCargado + 5);
+        jmp_dir_a(distancia);
+    }
+
+    private void fixupEDI() {
+        /*
+         * A continuación, se debe hacer un fix-up de la primera instrucción de
+         * la parte de longitud variable de la sección text (MOV EDI, 00000000), ya
+         * que el desplazamiento actual en el archivo ejecutable indica el comienzo
+         * del área de almacenamiento de las variables.
+         */
+
+        System.out.println("\n1. Actualizando EDI\n");
+
+        int posicionActual = getSize();
+        int baseOfCodePosicion = buscarEnteroEn(Constantes.BASE_OF_CODE_POSICION);
+        int imageBasePosicion = buscarEnteroEn(Constantes.IMAGE_BASE_POSICION);
+        int tamanoHeader = buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
+
+        int posicion = baseOfCodePosicion + imageBasePosicion + posicionActual
+                - tamanoHeader;
+
+        System.out.println("\n\t=== Calculando posición de EDI ===");
+        System.out.println("\tPosición actual     : " + toHexa(posicionActual) + " (" + posicionActual + ")");
+        System.out.println("\tBaseOfCode          : " + toHexa(baseOfCodePosicion) + " (" + baseOfCodePosicion + ")");
+        System.out.println("\tImageBase           : " + toHexa(imageBasePosicion) + " (" + imageBasePosicion + ")");
+        System.out.println("\tTamaño del header   : " + toHexa(tamanoHeader) + " (" + tamanoHeader + ")");
+        System.out.println("\tPosición de EDI     : " + toHexa(posicion) + " (" + posicion + ")\n");
+
+        cargarIntEn(posicion, EDI);
+        System.out.println("\nEDI actualizado a   : " + toHexa(posicion));
+
+    }
+
+    private void reservarMemoriaParaVariables(int cantVariables) {
+        /*
+         * Luego, deben grabarse ceros al final del archivo ejecutable, a razón
+         * de cuatro bytes por cada variable (a esta altura de la compilación, el
+         * número de variables que fueron declaradas ya es conocido).
+         */
+
+        int espacioReservado = 4 * cantVariables;
+        System.out.println("\n2. Reservando espacio para variables: " + cantVariables + " variables\n");
+        System.out.println("\nDesde --> " + toHexa(getSize() + 1)); // + 1 para que no se incluya el byte actual
+        for (int i = 0; i < espacioReservado; i++) {
+            cargarByte(0);
+        }
+        System.out.println("Hasta --> " + toHexa(getSize()));
+    }
+
+    private void actualizarVirtualSize() {
+        /*
+         * Ahora se debe realizar el ajuste del campo VirtualSize del encabezado
+         * de la sección text (posiciones 416-419, o 01A0-01A3 en hexadecimal),
+         * colocando allí el tamaño de la sección text (hasta el momento).
+         */
+
+        int sizeTextSection = getSize() - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
+        System.out.println("\n3. Actualizando VirtualSize\n");
+        cargarIntEn(sizeTextSection, Constantes.VIRTUAL_SIZE_POSICION);
+    }
+
+    private void rellenarMultiploDeFileAlignment() {
+        /*
+         * Después, debe rellenarse el archivo con ceros, para que su tamaño sea
+         * múltiplo del campo FileAlignment del encabezado opcional específico para
+         * Windows (posiciones 220-223, o 00DC-00DF en hexadecimal).
+         */
+
+        int fileAlignment = buscarEnteroEn(Constantes.FILE_ALIGNMENT_POSICION);
+        System.out.println("\n4. Rellenando múltiplo de FileAlignment (" + fileAlignment + " bytes)\n");
+        int posicionActual = getSize();
+        int cantidadDeCeros = 0;
+
+        System.out.println("Desde --> " + toHexa(getSize() + 1)); // + 1 para que no se incluya el byte actual
+        while (posicionActual % fileAlignment != 0) {
+            cargarByte();
+            posicionActual++;
+            cantidadDeCeros++;
+        }
+        System.out.println("Hasta --> " + toHexa(getSize()));
+        System.out.println("\nSe rellenaron " + cantidadDeCeros + " bytes con 00");
+
+    }
+
+    private void ajustarSizoOfCodeSection() {
+        // SizeOfCodeSection (posiciones 188-191, o 00BC-00BF en hexadecimal)
+
+        System.out.println("\n5. Ajustando SizeOfCodeSection\n");
+        int sizeTextSection = getSize() - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
+        cargarIntEn(sizeTextSection, Constantes.SIZE_OF_CODE_SECTION_POSICION);
+    }
+
+    private void ajustarSizeOfRawData() {
+        // SizeOfRawData (posiciones 424-427, o 01A8-01AB en hexadecimal)
+
+        System.out.println("\n5. Ajustando SizeOfRawData\n");
+        int sizeTextSection = finalDeCodigoCargado - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
+        cargarIntEn(sizeTextSection, Constantes.SIZE_OF_RAW_DATA_POSICION);
+    }
+
+    private void ajustarSizeOfImage() {
+        // SizeOfImage (posiciones 240-243, o 00F0-00F3 en hexadecimal)
+
+        System.out.println("\n6. Ajustando SizeOfImage\n");
+        int sizeOfCodeSection = buscarEnteroEn(Constantes.SIZE_OF_CODE_SECTION_POSICION);
+        int sectionAlignment = buscarEnteroEn(Constantes.SECTION_ALIGNMENT_POSICION);
+
+        cargarIntEn((2 + sizeOfCodeSection / sectionAlignment) * sectionAlignment, Constantes.SIZE_OF_IMAGE_POSICION);
+    }
+
+    private void ajustarSizeOfData() {
+        // SizeOfImage (posiciones 240-243, o 00F0-00F3 en hexadecimal)
+
+        System.out.println("\n6. Ajustando BaseOfData\n");
+        int sizeOfRawData = buscarEnteroEn(Constantes.SIZE_OF_RAW_DATA_POSICION);
+        int sectionAlignment = buscarEnteroEn(Constantes.SECTION_ALIGNMENT_POSICION);
+
+        cargarIntEn((2 + sizeOfRawData / sectionAlignment) * sectionAlignment, Constantes.BASE_OF_DATA_POSICION);
+    }
+
+    void cargarEDI() {
+        // MOV EDI, abcdefgh = BF gh ef cd ab --> (COPIA EL SEGUNDO OPERANDO EN EL
+        // PRIMERO)
+        // Luego se asignará el valor de EDI a la variable correspondiente (SIEMPRE ES
+        // 0040157A)
+        reservarEDI();
+
+        this.EDI = getSize() - 4; // - 4 para quedar en BF x<- _ _ _ 
+    }
+
+    private void reservarEDI() {
+        cargarByte(0xBF);
+        cargarByte(0x00);
+        cargarByte(0x00);
+        cargarByte(0x00);
+        cargarByte(0x00);
+    }
+
+    private void pop_eax() {// Código de instrucción para POP EAX
+        cargarByte(0x58);
+    }
+
+    private void pop_ebx() {// Código de instrucción para POP EBX
+        cargarByte(0x5B);
+    }
+
+    private void imul_ebx() {// Código de instrucción para IMUL EBX
+        cargarByte(0xF7);
+        cargarByte(0xEB);
+
+    }
+
+    private void xchg_eax_ebx() {// Código de instrucción para XCHG EAX, EBX
+        cargarByte(0x93);
+    }
+
+    private void cdq() {// Código de instrucción para CDQ
+        cargarByte(0x99);
+    }
+
+    private void idiv_ebx() {// Código de instrucción para IDIV EBX
+        cargarByte(0xF7);
+        cargarByte(0xFB);
+    }
+
+    private void sub_eax_ebx() {// Código de instrucción para SUB EAX, EBX
+        cargarByte(0x29);
+        cargarByte(0xD8);
+    }
+
+    private void neg_eax() {
+        cargarByte(0xF7);
+        cargarByte(0xD8);
+    }
+
+    private void add_eax_ebx() {// Código de instrucción para ADD EAX, EBX
+        cargarByte(0x01);
+        cargarByte(0xD8);
+    }
+
+    public void multiplicar() { //MULTIPLICAR [ 58 5B F7 EB 50 ]
+        pop_eax();
+        pop_ebx();
+        imul_ebx();
+        push_eax();
+    }
+
+    public void dividir() { //DIVIDIR [ 58 5B 93 99 F7 FB 50 ]
+        pop_eax();
+        pop_ebx();
+        xchg_eax_ebx();
+        cdq();
+        idiv_ebx();
+        push_eax();
+    }
+
+    public void restar() { //RESTAR [ 58 5B 93 29 D8 50 ]
+        pop_eax();
+        pop_ebx();
+        xchg_eax_ebx();
+        sub_eax_ebx();
+        push_eax();
+    }
+
+    public void sumar() { //SUMAR [ 58 5B 01 D8 50 ]
+        pop_eax();
+        pop_ebx();
+        add_eax_ebx();
+        push_eax();
+
+    }
+
+    public void negar() { //NEGAR [ 58 F7 D8 50 ]
+        pop_eax();
+        neg_eax();
+        push_eax();
+    }
+
+    public void call(int distancia) { //CALL [ E8 56 FF FF FF ]
+        cargarByte(0xE8);
+        cargarInt(distancia);
+    }
+
+    public void ret() { // RET = C3 --> RETORNA AL PUNTO DESDE DONDE SE LLAMÓ UNA SUBRUTINA
+        cargarByte(0xC3);
+    }
+
+    private void test_al() { //Código de instrucción para TEST AL, ab
+        cargarByte(0xA8);
+    }
+
+    private void jpo_dir() { //Código de instrucción para JPO dir
+        cargarByte(0x7B);
+    }
+
+    public void jmp_dir() { //Código de instrucción para JMP dir
+        // RESERVAR JUMP = E9 00 00 00 00 --> RESERVA ESPACIO PARA EL JUMP YA QUE NO SE CONOCE LA CANTIDAD DE BYTES
+        cargarByte(0xE9);
+        cargarByte(0x00);
+        cargarByte(0x00);
+        cargarByte(0x00);
+        cargarByte(0x00);
+    }
+
+    public void jmp_dir_a(int valor) { //Código de instrucción para JMP dir
+        // CUANDO SE CONOCE EL VALOR DEL JUMP
+        cargarByte(0xE9);
+        cargarInt(valor);
+    }
+
+    public void writeln() {
+        int posicionActual = getSize();
+        int distanciaHaciaES = Constantes.IMPRIMIR_SALTO_DE_LINEA - (posicionActual + 5);
+        call(distanciaHaciaES);
+
+    }
+
+    public void writeEntero() {
+        pop_eax();
+        int posicionActual = getSize();
+        int distanciaHaciaES = Constantes.IMPRIMIR_ENTERO_DE_EAX - (posicionActual + 5);
+        call(distanciaHaciaES);
+    }
+
+    public int buscarEnteroEn(int pos) {
+        return memoria.get(pos)
+                + memoria.get(pos + 1) * 0x100
+                + memoria.get(pos + 2) * 0x10000
+                + memoria.get(pos + 3) * 0x1000000;
+    }
+
+    public void writeCadena(String cadena) {
+        /*
+         * 1. Se genera la inicialización de EAX con la ubicación absoluta que
+         * tendrá la cadena (se conoce porque la longitud de los pasos 2 y 3
+         * es fija), usando para calcularla los campos BaseOfCode (posiciones
+         * 204-207, o 00CC-00CF en hexadecimal) e ImageBase (posiciones 212-
+         * 215, o 00D4-00D7 en hexadecimal) del encabezado del archivo
+         * ejecutable;
+         */
+        int baseOfCodePosicion = buscarEnteroEn(Constantes.BASE_OF_CODE_POSICION); // Inicio de la sección de código
+        int imageBasePosicion = buscarEnteroEn(Constantes.IMAGE_BASE_POSICION); // Base de la imagen
+        int posicionActual = getSize(); // Posición actual en la memoria
+        int inicioDeCadena = 15; // Posición de inicio de la cadena (después de las siguientes 3 instrucciones de 5 bytes c/u)
+        int tamanoHeader = buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION); // Tamaño del header
+
+        int ubiCadena = baseOfCodePosicion + imageBasePosicion + posicionActual + inicioDeCadena - tamanoHeader;
+
+        mov_eax(ubiCadena);
+
+        // 2. Se genera la invocación a la rutina de E/S que mostrará la cadena;
+        int distanciaHaciaES = Constantes.IMPRIMIR_CADENA - (getSize() + 5); // + 5 porqué se tienen en cuenta los 5 bytes de la instrucción siguiente (CALL)
+        call(distanciaHaciaES);
+
+        // 3. Se genera un salto incondicional E9 00 00 00 00;
+        // reservarJUMP();
+        int tamanoCadena = cadena.length();
+        int comillasSimples = 2; // La cadena tiene comillas simples al principio y al final (se las sacamos)
+        int ceroFinal = 1; // Tiene un cero al final de la cadena (se lo agregamos)
+
+        int tamanoFinalDeCadena = tamanoCadena - comillasSimples + ceroFinal;
+
+        // cargarByte(0xe9);
+        // cargarInt(tamanoFinalDeCadena);
+        jmp_dir_a(tamanoFinalDeCadena);
+        // int jumpPosicion = getSize();
+
+        // 4. Se generan los bytes de la cadena, seguidos de un cero;
+        for (int i = 1; i < tamanoCadena - 1; i++) {
+            char c = cadena.charAt(i);
+            // System.out.println(c);
+            cargarByte(c);
+        }
+        cargarByte(0);
+
+        // 5. Se realiza el fix-up del salto colocado en el paso 3. (No hace falta
+        // porque se cargo bien de inicio)
+        // int cadenaFinal = getSize();
+        // cargarIntEn(cadenaFinal, jumpPosicion - 4);
+    }
+
+    private void cmp_ebx_eax() { //Código de instrucción para CMP EBX, EAX
+        cargarByte(0x39);
+        cargarByte(0xC3);
+    }
+
+    public void odd() { //ODD [ 58 A8 01 7B 05 E9 00 00 00 00 ]
+        pop_eax();
+        test_al();
+        cargarByte(0x01);
+        jpo_dir();
+        cargarByte(0x05); //Saltar 5 (para saltear el jump en caso de que tenga que saltar toda la posicion
+        jmp_dir();
+    }
+
+    public void expresionCondicional(TokenType condicional) { //EXPRESION CONDICIONAL [58 5B 39 C3 ...]
+        pop_eax();
+        pop_ebx();
+        cmp_ebx_eax();
+
+        switch (condicional) {
+            case TokenType.COMPARAR:
+                cargarByte(0x74);
+                break;
+            case TokenType.DISTINTO:
+                cargarByte(0x75);
+                break;
+            case TokenType.MENOR:
+                cargarByte(0x7C);
+                break;
+            case TokenType.MENOR_O_IG:
+                cargarByte(0x7E);
+                break;
+            case TokenType.MAYOR:
+                cargarByte(0x7F);
+                break;
+            case TokenType.MAYOR_O_IG:
+                cargarByte(0x7D);
+                break;
+            default:
+                System.out.println("Error: expresión condicional no válida");
+                break;
+        }
+
+        cargarByte(0x05);
+        jmp_dir();
+    }
+
+    public void asignarAVariable(int valorVar) {
+        pop_eax();
+        mov_edi_eax(valorVar);
+    }
+
+    public void mov_eax(int valor) {// Código de instrucción para MOV EAX, abcdefgh
+        cargarByte(0xB8);
+        cargarInt(valor);
+    }
+
+    public void mov_eax_edi(int valor) {//Código de instrucción para MOV EAX, [EDI+abcdefgh]
+        cargarByte(0x8B);
+        cargarByte(0x87);
+        cargarInt(valor);
+
+    }
+
+    public void mov_edi_eax(int valor) {//Código de instrucción para MOV [EDI+abcdefgh], EAX
+        cargarByte(0x89);
+        cargarByte(0x87);
+        cargarInt(valor);
+
+    }
+
+    public void push_eax() {//Código de instrucción para PUSH EAX
+        cargarByte(0x50);
+
+    }
+
     private void crearArchivo(String nombreArchivo) {
 
+        int puntoIndex = nombreArchivo.lastIndexOf(".");
+        if (puntoIndex != -1) {
         // Obtengo solo el nombre sin la extensión .PL0
+            nombreArchivo = nombreArchivo.substring(0, puntoIndex);
         nombreArchivo = nombreArchivo.substring(0, nombreArchivo.lastIndexOf("."));
-
+        }
         File archivo = new File(nombreArchivo);
         try {
             if (archivo.createNewFile()) {
@@ -30,10 +457,26 @@ public class GeneradorDeCodigo {
             e.printStackTrace();
         }
     }
+    
+    public void generarArchivoExe(String nombreArchivo) {
+        try {
+            FileOutputStream archivo = new FileOutputStream("./" + nombreArchivo + ".exe");
+            for (byte b : memoria) {
+                archivo.write(b);
+            }
+            archivo.close();
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
 
-    public void cargarByte(int byteACargar) {
+    private void cargarByte(int byteACargar) {
         byte valorByte = (byte) byteACargar; // Casteo a byte
         memoria.add(valorByte);
+    }
+
+    private void cargarByte() {
+        memoria.add((byte) 0x00);
     }
 
     public void cargarInt(int enteroACargar) {
@@ -58,8 +501,10 @@ public class GeneradorDeCodigo {
     //Se usaria con el punto final en el analizador sintactico
     public void volcarMemoriaEnArchivo(String nombreArchivo) {
 
-        // Obtengo solo el nombre sin la extensión .PL0
-        nombreArchivo = nombreArchivo.substring(0, nombreArchivo.lastIndexOf("."));
+        int puntoIndex = nombreArchivo.lastIndexOf(".");
+        if (puntoIndex != -1) {
+            nombreArchivo = nombreArchivo.substring(0, puntoIndex);
+        }
 
         crearArchivo(nombreArchivo);
 
@@ -72,6 +517,10 @@ public class GeneradorDeCodigo {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    
+    private String toHexa(int valor) {
+        return "0x" + Integer.toHexString(valor).toUpperCase();
     }
 
     private void cargarParteDeLongitudFija() {
@@ -1869,5 +2318,4 @@ public class GeneradorDeCodigo {
         memoria.add(((byte) 0xC8));
         memoria.add(((byte) 0xC3));
     }
-
 }

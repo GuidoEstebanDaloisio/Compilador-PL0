@@ -5,7 +5,7 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        String Archivo = "MAL-06.pl0"; // Ruta del archivo definida manualmente
+        String Archivo = "BIEN-01.pl0"; // Ruta del archivo definida manualmente
         AnalizadorLexico alex = new AnalizadorLexico(Archivo);
         AnalizadorSemantico semantico = new AnalizadorSemantico();
         GeneradorDeCodigo genCod = new GeneradorDeCodigo();
