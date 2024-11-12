@@ -120,9 +120,10 @@ public class AnalizadorSintactico {
         analizarIdentificador();
 
         semantico.registrarIdentificador(tokenActual, VAR, base, desplazamiento);
-        cantVariablesDeclaradas++;
         desplazamiento++;
         semantico.asignarValor(tokenActual.getValor(), cantVariablesDeclaradas, base, desplazamiento);
+        cantVariablesDeclaradas++;
+
         avanzar(); // Saltar identificador
 
         while (tokenActual.getTipo() == TokenType.COMA) {
@@ -174,7 +175,6 @@ public class AnalizadorSintactico {
         Token identReciente;
         switch (tokenActual.getTipo()) {
             case IDENTIFICADOR:
-
                 identReciente = tokenActual;
 
                 //Para una asignacion de este tipo solo puede ser con un identificador var
@@ -183,20 +183,33 @@ public class AnalizadorSintactico {
 
                 avanzar();
 
-                if (tokenActual.getTipo() == TokenType.ASIGNACION) {
-                    avanzar(); // Saltar ":="
-                    analizarExpresion(base, desplazamiento);
+                switch (tokenActual.getTipo()) {
+                    case TokenType.ASIGNACION:
+                        avanzar(); // Saltar ":="
+                        analizarExpresion(base, desplazamiento);
 
-                } else {
-                    System.out.println(ERR_SINT_FALTA_DOS_PUNTOS_IGUAL_EN_PROPOSICION);
-                    System.exit(0);
+                        //semantico.asignarValor(identReciente.getValor(), Integer.parseInt(tokenActual.getValor()), base, desplazamiento);
+                        //cantVariablesDeclaradas++;
+                        //semantico.asignarValor(identReciente.getValor(), cantVariablesDeclaradas, base, desplazamiento);
+                        Identificador identVar = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);
+                        genCod.asignarAVariable(identVar.getValor() * 4);// Se multiplica por 4 porque cada variable ocupa 4 bytes
+                        break;
+
+                    case TokenType.SUMA:
+                        avanzar(); //salto el primer "+"
+                        if (tokenActual.getTipo() == TokenType.SUMA) {
+                            avanzar(); // Saltar el segundo "+"
+                        } else {
+                            System.out.println(ERR_SINT_FALTA_MAS_EN_PROPOSICION);
+                            System.exit(0);
+                        }
+                        break;
+
+                    default:
+
+                        System.out.println(ERR_SINT_FALTA_ADICION_O_DOS_PUNTOS_IGUAL_EN_PROPOSICION);
+                        System.exit(0);
                 }
-
-                //semantico.asignarValor(identReciente.getValor(), Integer.parseInt(tokenActual.getValor()), base, desplazamiento);
-                            cantVariablesDeclaradas++;
-                semantico.asignarValor(identReciente.getValor(), cantVariablesDeclaradas, base, desplazamiento);
-                Identificador identVar = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);
-                genCod.asignarAVariable(identVar.getValor() * 4);// Se multiplica por 4 porque cada variable ocupa 4 bytes
 
                 break;
             case PALABRA_RESERVADA:
@@ -306,8 +319,8 @@ public class AnalizadorSintactico {
                             }
                             avanzar(); // Saltar ")"
                         } else {
-                            System.out.println(ERR_SINT_FALTA_PARENTESIS_IZQ_EN_WRITELN);
-                            System.exit(0);
+                            //System.out.println(ERR_SINT_FALTA_PARENTESIS_IZQ_EN_WRITELN);
+                            //System.exit(0);
                         }
                         genCod.writeln();
 
@@ -332,6 +345,36 @@ public class AnalizadorSintactico {
                             System.exit(0);
                         }
                         break;
+
+                    case "for":
+                        avanzar();// Saltar el "for"
+                        analizarIdentificador();
+
+                        semantico.validarQueEsIdentificadorVarDeclarado(tokenActual.getValor(), base, desplazamiento);
+
+                        avanzar();// Salto el identificador
+
+                        if (tokenActual.getTipo() == TokenType.ASIGNACION) {
+                            avanzar(); // Saltar ":="
+                            analizarExpresion(base, desplazamiento);
+                        }
+
+                        if (!tokenActual.getValor().equals("to") && !tokenActual.getValor().equals("downto")) {
+                            System.out.println(ERR_SINT_FALTA_TO_O_DOWNTO_EN_BUCLE_FOR);
+                            System.exit(0);
+                        }
+                        avanzar(); // Saltar el "to" o "downto"
+
+                        analizarExpresion(base, desplazamiento);
+
+                        if (!tokenActual.getValor().equals("do")) {
+                            System.out.println(ERR_SINT_FALTA_DO_EN_BUCLE_FOR);
+                            System.exit(0);
+                        }
+                        avanzar(); // Saltar el "do"
+
+                        analizarProposicion(base, desplazamiento);
+
                     default:
                         // Si el token no coincide con ningún caso, puede ser una proposición vacía
                         // En este caso, se considera una proposición válida si no hay más tokens
@@ -412,10 +455,10 @@ public class AnalizadorSintactico {
                 break;
             case NUMERO:
                 analizarNumero();
-                
+
                 genCod.mov_eax(Integer.parseInt(tokenActual.getValor()));
                 genCod.push_eax();
-                
+
                 avanzar(); // Saltar número
                 break;
             case PARENTESIS_IZQ:
@@ -448,10 +491,9 @@ public class AnalizadorSintactico {
                     || tokenActual.getTipo() == TokenType.MENOR_O_IG
                     || tokenActual.getTipo() == TokenType.MAYOR
                     || tokenActual.getTipo() == TokenType.MAYOR_O_IG) {
-
+                genCod.expresionCondicional(tokenActual.getTipo());
                 avanzar(); // Saltar el operador de comparación
                 analizarExpresion(base, desplazamiento); // Analizar la segunda expresión
-                genCod.expresionCondicional(tokenActual.getTipo());
             } else {
                 System.out.println(ERR_SINT_FALTA_OPERADOR_DE_COMPARACION);
                 System.exit(0);
@@ -468,10 +510,14 @@ public class AnalizadorSintactico {
     }
 
     private void analizarNumero() throws IOException {
-        if (tokenActual.getTipo() != TokenType.NUMERO) {
+        if (tokenActual.getTipo() != TokenType.NUMERO && tokenActual.getTipo() != TokenType.RESTA) {
             System.out.println(ERR_SINT_FALTA_NUMERO);
             System.exit(0);
         }
+        if (tokenActual.getTipo() == TokenType.RESTA) {
+            avanzar();//salta el -
+        }
+
         //avanzar(); // Saltar número
     }
 }

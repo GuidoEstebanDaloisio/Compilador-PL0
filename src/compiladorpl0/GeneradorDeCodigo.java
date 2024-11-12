@@ -122,7 +122,6 @@ public class GeneradorDeCodigo {
         }
         System.out.println("Hasta --> " + toHexa(getSize()));
         System.out.println("\nSe rellenaron " + cantidadDeCeros + " bytes con 00");
-
     }
 
     private void ajustarSizoOfCodeSection() {
@@ -131,13 +130,13 @@ public class GeneradorDeCodigo {
         System.out.println("\n5. Ajustando SizeOfCodeSection\n");
         int sizeTextSection = getSize() - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
         cargarIntEn(sizeTextSection, Constantes.SIZE_OF_CODE_SECTION_POSICION);
-    }
+        }
 
     private void ajustarSizeOfRawData() {
         // SizeOfRawData (posiciones 424-427, o 01A8-01AB en hexadecimal)
 
         System.out.println("\n5. Ajustando SizeOfRawData\n");
-        int sizeTextSection = finalDeCodigoCargado - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
+        int sizeTextSection = getSize() - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
         cargarIntEn(sizeTextSection, Constantes.SIZE_OF_RAW_DATA_POSICION);
     }
 
@@ -341,7 +340,7 @@ public class GeneradorDeCodigo {
         int comillasSimples = 2; // La cadena tiene comillas simples al principio y al final (se las sacamos)
         int ceroFinal = 1; // Tiene un cero al final de la cadena (se lo agregamos)
 
-        int tamanoFinalDeCadena = tamanoCadena - comillasSimples + ceroFinal;
+        int tamanoFinalDeCadena = tamanoCadena + ceroFinal;
 
         // cargarByte(0xe9);
         // cargarInt(tamanoFinalDeCadena);
@@ -349,7 +348,7 @@ public class GeneradorDeCodigo {
         // int jumpPosicion = getSize();
 
         // 4. Se generan los bytes de la cadena, seguidos de un cero;
-        for (int i = 1; i < tamanoCadena - 1; i++) {
+        for (int i = 0; i < tamanoCadena; i++) {
             char c = cadena.charAt(i);
             // System.out.println(c);
             cargarByte(c);

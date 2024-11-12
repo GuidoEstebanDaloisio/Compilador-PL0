@@ -10,9 +10,13 @@ public class Errores {
     static String ERR_SINT_FALTA_PUNTO_Y_COMA_EN_PROCEDIMIENTO = "\nError sintactico: Se esperaba ';' despues de la declaracion del procedimiento";
     static String ERR_SINT_FALTA_PUNTO_Y_COMA_FINAL_EN_PROCEDIMIENTO = "\nError sintactico: Se esperaba ';' al final de la declaracion del procedimiento";
     static String ERR_SINT_FALTA_DOS_PUNTOS_IGUAL_EN_PROPOSICION = "\nError sintactico: Se esperaba ':=' en la proposicion";
+    static String ERR_SINT_FALTA_MAS_EN_PROPOSICION = "\nError sintactico: Se esperaba un + para sumar 1 al identificador en proposicion";
+    static String ERR_SINT_FALTA_ADICION_O_DOS_PUNTOS_IGUAL_EN_PROPOSICION = "\nError sintactico: Se esperaba un '++' o ':=' en la proposicion";
     static String ERR_SINT_FALTA_END_EN_BLOQUE = "\nError sintactico: Se esperaba 'end' al final del bloque";
     static String ERR_SINT_FALTA_THEN_EN_CONDICION = "\nError sintactico: Se esperaba 'then' después de la condicion";
+    static String ERR_SINT_FALTA_TO_O_DOWNTO_EN_BUCLE_FOR = "\nError sintactico: Se esperaba 'to' o 'downto' después de la expresion del bucle for";
     static String ERR_SINT_FALTA_DO_EN_CONDICION = "\nError sintactico: Se esperaba 'do' despues de la condicion";
+    static String ERR_SINT_FALTA_DO_EN_BUCLE_FOR = "\nError sintactico: Se esperaba 'do' después de la expresion del bucle for";
     static String ERR_SINT_FALTA_PARENTESIS_DER = "\nError sintactico: Se esperaba ')'";
     static String ERR_SINT_FALTA_PARENTESIS_IZQ_EN_READLN = "\nError sintactico: Se esperaba '(' despues de 'readln'";
     static String ERR_SINT_FALTA_PARENTESIS_IZQ_EN_WRITELN = "\nError sintactico: Se esperaba '(' despues de 'writeln''";

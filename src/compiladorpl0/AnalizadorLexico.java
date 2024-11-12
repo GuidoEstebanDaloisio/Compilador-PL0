@@ -12,7 +12,7 @@ public class AnalizadorLexico {
     private final BufferedReader reader;
     private int currentChar;
     private static final Set<String> PALABRAS_RESERVADAS = new HashSet<>(Arrays.asList(
-            "const", "var", "procedure", "call", "begin", "end", "if", "then", "while", "do", "odd", "readln", "writeln", "write"
+            "const", "var", "procedure", "call", "begin", "end", "if", "then", "while", "do", "odd", "readln", "writeln", "write", "for", "to", "downto"
     ));
     private boolean eofReached = false;
 
