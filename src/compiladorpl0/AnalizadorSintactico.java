@@ -131,9 +131,10 @@ public class AnalizadorSintactico {
             analizarIdentificador();
 
             semantico.registrarIdentificador(tokenActual, VAR, base, desplazamiento);
-            cantVariablesDeclaradas++;
             desplazamiento++;
             semantico.asignarValor(tokenActual.getValor(), cantVariablesDeclaradas, base, desplazamiento);
+            cantVariablesDeclaradas++;
+
             avanzar(); // Saltar identificador
         }
         if (tokenActual.getTipo() != TokenType.PUNTO_Y_COMA) {
@@ -287,10 +288,19 @@ public class AnalizadorSintactico {
 
                             semantico.validarQueEsIdentificadorVarDeclarado(tokenActual.getValor(), base, desplazamiento);
 
+                            Identificador identVar = semantico.buscarIdentificador(tokenActual.getValor(), base, desplazamiento);
+                            genCod.readLn(identVar.getValor() * 4);
+
                             avanzar(); // Saltar identificador
                             while (tokenActual.getTipo() == TokenType.COMA) {
                                 avanzar(); // Saltar ","
                                 analizarIdentificador(); // Leer identificador adicional
+
+                                semantico.validarQueEsIdentificadorVarDeclarado(tokenActual.getValor(), base, desplazamiento);
+
+                                identVar = semantico.buscarIdentificador(tokenActual.getValor(), base, desplazamiento);
+                                genCod.readLn(identVar.getValor() * 4);
+
                                 avanzar(); // Saltar identificador
                             }
                             if (tokenActual.getTipo() != TokenType.PARENTESIS_DER) {
@@ -430,10 +440,13 @@ public class AnalizadorSintactico {
 
     private void analizarTermino(int base, int desplazamiento) throws IOException {
         analizarFactor(base, desplazamiento);
+        TokenType operacion;
         while (tokenActual.getTipo() == TokenType.MULTIPLICACION || tokenActual.getTipo() == TokenType.DIVISION) {
+            operacion = tokenActual.getTipo();
+
             avanzar(); // Saltar "*" o "/"
             analizarFactor(base, desplazamiento); // Analiza el siguiente factor
-            if (tokenActual.getTipo() == TokenType.MULTIPLICACION) {
+            if (operacion == TokenType.MULTIPLICACION) {
                 genCod.multiplicar();
             } else {
                 genCod.dividir();
@@ -446,7 +459,7 @@ public class AnalizadorSintactico {
             case IDENTIFICADOR:
                 analizarIdentificador();
                 if (semantico.esVar(tokenActual.getValor(), base, desplazamiento)) {
-                    genCod.mov_eax_edi(semantico.obtenerValorDelIdentificador(tokenActual.getValor(), base, desplazamiento));
+                    genCod.mov_eax_edi(semantico.obtenerValorDelIdentificador(tokenActual.getValor(), base, desplazamiento) * 4);
                 } else if (semantico.esConst(tokenActual.getValor(), base, desplazamiento)) {
                     genCod.mov_eax(semantico.obtenerValorDelIdentificador(tokenActual.getValor(), base, desplazamiento));
                 }
@@ -491,9 +504,12 @@ public class AnalizadorSintactico {
                     || tokenActual.getTipo() == TokenType.MENOR_O_IG
                     || tokenActual.getTipo() == TokenType.MAYOR
                     || tokenActual.getTipo() == TokenType.MAYOR_O_IG) {
-                genCod.expresionCondicional(tokenActual.getTipo());
+
+                TokenType operador = tokenActual.getTipo();
+
                 avanzar(); // Saltar el operador de comparación
                 analizarExpresion(base, desplazamiento); // Analizar la segunda expresión
+                genCod.expresionCondicional(operador);
             } else {
                 System.out.println(ERR_SINT_FALTA_OPERADOR_DE_COMPARACION);
                 System.exit(0);

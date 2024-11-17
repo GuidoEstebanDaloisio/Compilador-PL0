@@ -289,6 +289,16 @@ public class GeneradorDeCodigo {
         cargarByte(0xE9);
         cargarInt(valor);
     }
+    
+    public void readLn(int valorVar) {
+        // CALL, _ _ _ _ (función en el header)
+
+        int posicionActual = getSize();
+        int distanciaHaciaES = Constantes.LEER_ENTERO_Y_GUARDAR_EN_EAX - (posicionActual + 5); // + 5 porqué se tienen en cuenta los 5 bytes de la instrucción siguiente (CALL)
+        call(distanciaHaciaES);
+
+        mov_edi_eax(valorVar);
+    }
 
     public void writeln() {
         int posicionActual = getSize();
@@ -425,7 +435,7 @@ public class GeneradorDeCodigo {
 
     }
 
-    public void mov_edi_eax(int valor) {//Código de instrucción para MOV [EDI+abcdefgh], EAX
+    private void mov_edi_eax(int valor) {//Código de instrucción para MOV [EDI+abcdefgh], EAX
         cargarByte(0x89);
         cargarByte(0x87);
         cargarInt(valor);
