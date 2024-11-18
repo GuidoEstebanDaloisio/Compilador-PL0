@@ -530,9 +530,9 @@ public class AnalizadorSintactico {
             System.out.println(ERR_SINT_FALTA_NUMERO);
             System.exit(0);
         }
-        if (tokenActual.getTipo() == TokenType.RESTA) {
+        /*if (tokenActual.getTipo() == TokenType.RESTA) {
             avanzar();//salta el -
-        }
+        }*/
 
         //avanzar(); // Saltar número
     }

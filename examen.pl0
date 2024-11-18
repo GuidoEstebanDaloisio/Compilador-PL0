@@ -1,8 +1,7 @@
-var x;
+var x, y;
+
 begin
-  while x<2 do
-	x:=x+1
-end.
-
-
-  
+  x := 2;
+  y := 5;
+  writeln('z es igual a ', y-x);
+end.  

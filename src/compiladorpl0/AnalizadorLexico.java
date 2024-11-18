@@ -53,6 +53,23 @@ public class AnalizadorLexico {
             }
         }
 
+        // Manejo de números negativos
+        if (currentChar == '-') {
+            avanzar();
+            if (Character.isDigit((char) currentChar)) {
+                StringBuilder numero = new StringBuilder("-");
+                while (Character.isDigit((char) currentChar)) {
+                    numero.append((char) currentChar);
+                    avanzar();
+                }
+                return new Token(TokenType.NUMERO, numero.toString());
+            } else {
+                // Si el '-' no es parte de un número, se interpreta como el operador de resta.
+                return new Token(TokenType.RESTA, "-");
+            }
+        }
+        // Manejo de números
+        
         if (Character.isDigit((char) currentChar)) {
             StringBuilder numero = new StringBuilder();
             while (Character.isDigit((char) currentChar)) {
