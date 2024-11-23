@@ -1,7 +1,6 @@
-var x, y;
+var x;
 
 begin
-  x := 2;
-  y := 5;
-  writeln('z es igual a ', y-x);
-end.  
+  x--;
+  writeln('x: ',x)
+end.

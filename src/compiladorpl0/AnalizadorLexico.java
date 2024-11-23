@@ -26,7 +26,7 @@ public class AnalizadorLexico {
         if (currentChar == -1) {
             eofReached = true;
         } else {
-            System.out.print((char) currentChar);
+            //System.out.print((char) currentChar); //MOSTRAR EL PROGRAMA
         }
     }
 
@@ -51,24 +51,7 @@ public class AnalizadorLexico {
             } else {
                 return new Token(TokenType.IDENTIFICADOR, identificador.toString());
             }
-        }
-
-        // Manejo de números negativos
-        if (currentChar == '-') {
-            avanzar();
-            if (Character.isDigit((char) currentChar)) {
-                StringBuilder numero = new StringBuilder("-");
-                while (Character.isDigit((char) currentChar)) {
-                    numero.append((char) currentChar);
-                    avanzar();
-                }
-                return new Token(TokenType.NUMERO, numero.toString());
-            } else {
-                // Si el '-' no es parte de un número, se interpreta como el operador de resta.
-                return new Token(TokenType.RESTA, "-");
-            }
-        }
-        // Manejo de números
+        }      
         
         if (Character.isDigit((char) currentChar)) {
             StringBuilder numero = new StringBuilder();
@@ -79,6 +62,33 @@ public class AnalizadorLexico {
             return new Token(TokenType.NUMERO, numero.toString());
         }
 
+        
+        if (currentChar == '-') {
+            avanzar();
+            if (currentChar == '-') {
+                avanzar();
+                return new Token(TokenType.DECREMENTO, "--");
+            } else if (Character.isDigit((char) currentChar)) {// Manejo de números negativos
+                StringBuilder numero = new StringBuilder("-");
+                while (Character.isDigit((char) currentChar)) {
+                    numero.append((char) currentChar);
+                    avanzar();
+                }
+                return new Token(TokenType.NUMERO, numero.toString());
+            } else {
+                return new Token(TokenType.RESTA, "-");
+            }
+        }
+        if (currentChar == '+') {
+            avanzar();
+            if (currentChar == '+') {
+                avanzar();
+                return new Token(TokenType.INCREMENTO, "++");
+            } else {
+                return new Token(TokenType.SUMA, "+");
+            }
+        }   
+        
         if (currentChar == '\'') {
             StringBuilder cadena = new StringBuilder();
             avanzar();
@@ -131,12 +141,6 @@ public class AnalizadorLexico {
             case '=':
                 avanzar();
                 return new Token(TokenType.COMPARAR, "=");
-            case '+':
-                avanzar();
-                return new Token(TokenType.SUMA, "+");
-            case '-':
-                avanzar();
-                return new Token(TokenType.RESTA, "-");
             case '*':
                 avanzar();
                 return new Token(TokenType.MULTIPLICACION, "*");

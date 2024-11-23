@@ -22,5 +22,7 @@ public enum TokenType {
     COMPARAR,
     CADENA,
     PUNTO,
-    PALABRA_RESERVADA
+    PALABRA_RESERVADA,
+    INCREMENTO, // ++
+    DECREMENTO  // --
 }

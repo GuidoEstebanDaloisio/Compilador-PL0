@@ -174,6 +174,7 @@ public class AnalizadorSintactico {
 
     private void analizarProposicion(int base, int desplazamiento) throws IOException {
         Token identReciente;
+
         switch (tokenActual.getTipo()) {
             case IDENTIFICADOR:
                 identReciente = tokenActual;
@@ -183,36 +184,55 @@ public class AnalizadorSintactico {
                 semantico.validarQueEsIdentificadorVarDeclarado(tokenActual.getValor(), base, desplazamiento);
 
                 avanzar();
+                
+                
 
                 switch (tokenActual.getTipo()) {
                     case TokenType.ASIGNACION:
                         avanzar(); // Saltar ":="
                         analizarExpresion(base, desplazamiento);
 
-                        //semantico.asignarValor(identReciente.getValor(), Integer.parseInt(tokenActual.getValor()), base, desplazamiento);
-                        //cantVariablesDeclaradas++;
-                        //semantico.asignarValor(identReciente.getValor(), cantVariablesDeclaradas, base, desplazamiento);
                         Identificador identVar = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);
-                        genCod.asignarAVariable(identVar.getValor() * 4);// Se multiplica por 4 porque cada variable ocupa 4 bytes
+                        genCod.mostrarInicioDeProposicion("ASIGNAR (" + identReciente + ")");
+                        genCod.asignarAVariable(identVar.getValor() * 4); // Cada variable ocupa 4 bytes
+                        genCod.mostrarFinalDeProposicion("ASIGNAR");
+
                         break;
 
-                    case TokenType.SUMA:
-                        avanzar(); //salto el primer "+"
-                        if (tokenActual.getTipo() == TokenType.SUMA) {
-                            avanzar(); // Saltar el segundo "+"
-                        } else {
-                            System.out.println(ERR_SINT_FALTA_MAS_EN_PROPOSICION);
-                            System.exit(0);
-                        }
+                    case TokenType.INCREMENTO:
+                        avanzar(); // Saltar "++"
+
+                        Identificador varIncremento = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);
+
+                        genCod.mov_eax_edi(varIncremento.getValor() * 4);
+                        genCod.push_eax();
+                        genCod.mov_eax(1);
+                        genCod.push_eax();
+                        genCod.sumar();
+
+                        genCod.asignarAVariable(varIncremento.getValor() * 4); // Cada variable ocupa 4 bytes
+
+                        break;
+
+                    case TokenType.DECREMENTO:
+                        avanzar(); // Saltar "--"
+
+                        Identificador varDecremento = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);
+                        genCod.mov_eax_edi(varDecremento.getValor() * 4);
+                        genCod.push_eax();
+                        genCod.mov_eax(-1);
+                        genCod.push_eax();
+                        genCod.sumar();
+
+                        genCod.asignarAVariable(varDecremento.getValor() * 4); // Cada variable ocupa 4 bytes                        
                         break;
 
                     default:
-
-                        System.out.println(ERR_SINT_FALTA_ADICION_O_DOS_PUNTOS_IGUAL_EN_PROPOSICION);
+                        System.out.println(ERR_SINT_FALTA_INCREMENTO_DECREMENTO_O_DOS_PUNTOS_IGUAL_EN_PROPOSICION);
                         System.exit(0);
                 }
-
                 break;
+
             case PALABRA_RESERVADA:
                 switch (tokenActual.getValor()) {
                     case "call":
@@ -225,11 +245,14 @@ public class AnalizadorSintactico {
                         Identificador identProcedure = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);
                         int posicionActual = genCod.getSize();
                         int puntoSalto = identProcedure.getValor() - (posicionActual + 5); // Valor del procedimiento - (posición actual + 5 bytes)
+                        genCod.mostrarInicioDeProposicion("CALL (" + tokenActual + ")");
                         genCod.call(puntoSalto);
+                        genCod.mostrarFinalDeProposicion("CALL");
 
                         avanzar(); // Saltar identificador
                         break;
                     case "begin":
+                        genCod.mostrarInicioDeProposicion("BEGIN");
                         avanzar(); // Saltar "begin"
                         analizarProposicion(base, desplazamiento); // Análisis de la primera proposición
                         while (tokenActual.getTipo() == TokenType.PUNTO_Y_COMA) {
@@ -240,9 +263,12 @@ public class AnalizadorSintactico {
                             System.out.println(ERR_SINT_FALTA_END_EN_BLOQUE);
                             System.exit(0);
                         }
+                        genCod.mostrarFinalDeProposicion("BEGIN");
+
                         avanzar(); // Saltar "end"
                         break;
                     case "if":
+                        genCod.mostrarInicioDeProposicion("IF");
                         avanzar(); // Saltar "if"
                         analizarCondicion(base, desplazamiento);
                         if (tokenActual.getTipo() != TokenType.PALABRA_RESERVADA || !tokenActual.getValor().equals("then")) {
@@ -257,9 +283,11 @@ public class AnalizadorSintactico {
                         int finDeProposicion = genCod.getSize();
                         int distanciaDeSalto = finDeProposicion - inicioDeProposicion; // Se calcula la distancia entre el inicio de la proposición y el final de la proposición para luego cargarla en el JUMP
                         genCod.cargarIntEn(distanciaDeSalto, inicioDeProposicion - 4); // Se carga la distancia en el JUMP reservado al inicio de la proposición (el JUMP se encuentra en la condición) - 4 para quedar despues del JUMP E9
+                        genCod.mostrarFinalDeProposicion("IF");
 
                         break;
                     case "while":
+                        genCod.mostrarInicioDeProposicion("WHILE");
                         avanzar(); // Saltar "while"
 
                         int inicioCondicion = genCod.getSize(); // Aca se vuelve para volver a evaluar la condicion (happy path)
@@ -277,6 +305,7 @@ public class AnalizadorSintactico {
                         genCod.jmp_dir_a(inicioCondicion - finProposicion); // Vuelve  a la condición para evaluarla nuevamente (happy path)
                         int distanciaSalto = finProposicion - finCondicion;
                         genCod.cargarIntEn(distanciaSalto, finCondicion - 4); // Se carga la distancia en el JUMP reservado al final de la condición - 4 para quedar despues del JUMP E9
+                        genCod.mostrarFinalDeProposicion("WHILE");
 
                         break;
 
@@ -530,9 +559,6 @@ public class AnalizadorSintactico {
             System.out.println(ERR_SINT_FALTA_NUMERO);
             System.exit(0);
         }
-        /*if (tokenActual.getTipo() == TokenType.RESTA) {
-            avanzar();//salta el -
-        }*/
 
         //avanzar(); // Saltar número
     }

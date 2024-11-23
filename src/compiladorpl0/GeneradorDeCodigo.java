@@ -20,7 +20,7 @@ public class GeneradorDeCodigo {
     }
 
     public void finalDePrograma(int cantVariables) {
-        System.out.println("---------------------- FINAL DE PROGRAMA ----------------------");
+        System.out.println("---------------------- FINAL DE PROGRAMA ----------------------\n\n\n");
         this.finalDeCodigoCargado = getSize();
 
         actualizarHeader(); // 0 - Actualizar Header
@@ -130,7 +130,7 @@ public class GeneradorDeCodigo {
         System.out.println("\n5. Ajustando SizeOfCodeSection\n");
         int sizeTextSection = getSize() - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
         cargarIntEn(sizeTextSection, Constantes.SIZE_OF_CODE_SECTION_POSICION);
-        }
+    }
 
     private void ajustarSizeOfRawData() {
         // SizeOfRawData (posiciones 424-427, o 01A8-01AB en hexadecimal)
@@ -165,12 +165,16 @@ public class GeneradorDeCodigo {
         // PRIMERO)
         // Luego se asignará el valor de EDI a la variable correspondiente (SIEMPRE ES
         // 0040157A)
+        System.out.println("---------------------- INICIO DE CARGA DE PROGRAMA (" + toHexa(getSize() + 1) + ") ----------------------");
+
         reservarEDI();
 
         this.EDI = getSize() - 4; // - 4 para quedar en BF x<- _ _ _ 
     }
 
     private void reservarEDI() {
+        mostrarInicioDeInstruccion("Reservando EDI [ BF _ _ _ _ ]", 5);
+
         cargarByte(0xBF);
         cargarByte(0x00);
         cargarByte(0x00);
@@ -179,20 +183,24 @@ public class GeneradorDeCodigo {
     }
 
     private void pop_eax() {// Código de instrucción para POP EAX
+        mostrarInicioDeInstruccion("POP EAX [ 58 ]", 1);
         cargarByte(0x58);
     }
 
     private void pop_ebx() {// Código de instrucción para POP EBX
+        mostrarInicioDeInstruccion("POP EBX [ 5B ]", 1);
         cargarByte(0x5B);
     }
 
     private void imul_ebx() {// Código de instrucción para IMUL EBX
+        mostrarInicioDeInstruccion("IMUL EBX [ F7 EB ]", 2);
         cargarByte(0xF7);
         cargarByte(0xEB);
 
     }
 
-    private void xchg_eax_ebx() {// Código de instrucción para XCHG EAX, EBX
+    private void xchg_eax_ebx() {// Código de instrucción para XCHG EAX, EBX --> INTERCAMBIA LOS VALORES DE LOS OPERANDOS
+        mostrarInicioDeInstruccion("EXCHANGE [ 93 ]", 1);
         cargarByte(0x93);
     }
 
@@ -206,64 +214,81 @@ public class GeneradorDeCodigo {
     }
 
     private void sub_eax_ebx() {// Código de instrucción para SUB EAX, EBX
+        mostrarInicioDeInstruccion("SUB [ 29 D8 ]", 2);
         cargarByte(0x29);
         cargarByte(0xD8);
     }
 
-    private void neg_eax() {
+    private void neg_eax() { //Código de instruccion NEG EAX --> CAMBIA EL SIGNO DE EAX
+        mostrarInicioDeInstruccion("CAMBIAR SIGNO [ F7 D8 ]", 2);
         cargarByte(0xF7);
         cargarByte(0xD8);
     }
 
     private void add_eax_ebx() {// Código de instrucción para ADD EAX, EBX
+        mostrarInicioDeInstruccion("ADD [ 01 D8 ]", 2);
         cargarByte(0x01);
         cargarByte(0xD8);
     }
 
     public void multiplicar() { //MULTIPLICAR [ 58 5B F7 EB 50 ]
+        mostrarInicioDeInstruccion("MULTIPLICAR [ 58 5B F7 EB 50 ]", 5);
         pop_eax();
         pop_ebx();
         imul_ebx();
         push_eax();
+        mostrarFinDeInstruccion("MULTIPLICAR");        
     }
 
     public void dividir() { //DIVIDIR [ 58 5B 93 99 F7 FB 50 ]
+        mostrarInicioDeInstruccion("DIVIDIR [ 58 5B 93 99 F7 FB 50 ]", 7);
         pop_eax();
         pop_ebx();
         xchg_eax_ebx();
         cdq();
         idiv_ebx();
         push_eax();
+        mostrarFinDeInstruccion("DIVIDIR");
+        
     }
 
     public void restar() { //RESTAR [ 58 5B 93 29 D8 50 ]
+        mostrarInicioDeInstruccion("RESTAR [ 58 5B 93 D8 50 ]", 5);
         pop_eax();
         pop_ebx();
         xchg_eax_ebx();
         sub_eax_ebx();
         push_eax();
+        mostrarFinDeInstruccion("RESTAR");
+
     }
 
     public void sumar() { //SUMAR [ 58 5B 01 D8 50 ]
+        mostrarInicioDeInstruccion("SUMAR [ 58 5B 01 D8 50 ]", 5);
         pop_eax();
         pop_ebx();
         add_eax_ebx();
         push_eax();
+        mostrarFinDeInstruccion("SUMAR");
 
     }
 
     public void negar() { //NEGAR [ 58 F7 D8 50 ]
+        mostrarInicioDeInstruccion("NEGAR [ 58 F7 D8 50 ]", 4);
         pop_eax();
         neg_eax();
         push_eax();
+        mostrarFinDeInstruccion("NEGAR");        
     }
 
     public void call(int distancia) { //CALL [ E8 56 FF FF FF ]
+        System.out.println("-- Cargando CALL a " + toHexa(getSize() + (distancia + 5)) + " --");
         cargarByte(0xE8);
         cargarInt(distancia);
     }
 
     public void ret() { // RET = C3 --> RETORNA AL PUNTO DESDE DONDE SE LLAMÓ UNA SUBRUTINA
+        mostrarInicioDeInstruccion("RET [ C3 ]", 1);
         cargarByte(0xC3);
     }
 
@@ -277,6 +302,7 @@ public class GeneradorDeCodigo {
 
     public void jmp_dir() { //Código de instrucción para JMP dir
         // RESERVAR JUMP = E9 00 00 00 00 --> RESERVA ESPACIO PARA EL JUMP YA QUE NO SE CONOCE LA CANTIDAD DE BYTES
+        mostrarInicioDeInstruccion("JUMP | E9 _ _ _ _ |", 5);
         cargarByte(0xE9);
         cargarByte(0x00);
         cargarByte(0x00);
@@ -286,10 +312,11 @@ public class GeneradorDeCodigo {
 
     public void jmp_dir_a(int valor) { //Código de instrucción para JMP dir
         // CUANDO SE CONOCE EL VALOR DEL JUMP
+        System.out.println("-- Cargando JUMP con valor: " + valor + " (" + toHexa(valor) + ") --");
         cargarByte(0xE9);
         cargarInt(valor);
     }
-    
+
     public void readLn(int valorVar) {
         // CALL, _ _ _ _ (función en el header)
 
@@ -377,15 +404,19 @@ public class GeneradorDeCodigo {
     }
 
     public void odd() { //ODD [ 58 A8 01 7B 05 E9 00 00 00 00 ]
+        mostrarInicioDeInstruccion("ODD [ 58 A8 01 7B 05 E9 00 00 00 00 ]", 10);
         pop_eax();
         test_al();
         cargarByte(0x01);
         jpo_dir();
         cargarByte(0x05); //Saltar 5 (para saltear el jump en caso de que tenga que saltar toda la posicion
         jmp_dir();
+        mostrarFinDeInstruccion("ODD");
+
     }
 
     public void expresionCondicional(TokenType condicional) { //EXPRESION CONDICIONAL [58 5B 39 C3 ...]
+        mostrarInicioDeInstruccion("EXPRESION CONDICIONAL", 11);
         pop_eax();
         pop_ebx();
         cmp_ebx_eax();
@@ -424,11 +455,13 @@ public class GeneradorDeCodigo {
     }
 
     public void mov_eax(int valor) {// Código de instrucción para MOV EAX, abcdefgh
+        mostrarInicioDeInstruccion("MOV EAX [ B8 _ _ _ _ ] - Valor cargado: "+valor, 5);
         cargarByte(0xB8);
         cargarInt(valor);
     }
 
     public void mov_eax_edi(int valor) {//Código de instrucción para MOV EAX, [EDI+abcdefgh]
+        mostrarInicioDeInstruccion("MOV EAX, [EDI+abcdefgh] [ 8B 87 _ _ _ _ ] - Valor cargado: "+valor, 6);
         cargarByte(0x8B);
         cargarByte(0x87);
         cargarInt(valor);
@@ -436,6 +469,7 @@ public class GeneradorDeCodigo {
     }
 
     private void mov_edi_eax(int valor) {//Código de instrucción para MOV [EDI+abcdefgh], EAX
+        mostrarInicioDeInstruccion("MOV [EDI+abcdefgh], EAX  [ 89 87 _ _ _ _ ] - Valor cargado: "+valor, 6);
         cargarByte(0x89);
         cargarByte(0x87);
         cargarInt(valor);
@@ -443,6 +477,7 @@ public class GeneradorDeCodigo {
     }
 
     public void push_eax() {//Código de instrucción para PUSH EAX
+        mostrarInicioDeInstruccion("PUSH EAX [ 50 ]", 1);
         cargarByte(0x50);
 
     }
@@ -451,9 +486,9 @@ public class GeneradorDeCodigo {
 
         int puntoIndex = nombreArchivo.lastIndexOf(".");
         if (puntoIndex != -1) {
-        // Obtengo solo el nombre sin la extensión .PL0
+            // Obtengo solo el nombre sin la extensión .PL0
             nombreArchivo = nombreArchivo.substring(0, puntoIndex);
-        nombreArchivo = nombreArchivo.substring(0, nombreArchivo.lastIndexOf("."));
+            nombreArchivo = nombreArchivo.substring(0, nombreArchivo.lastIndexOf("."));
         }
         File archivo = new File(nombreArchivo);
         try {
@@ -466,7 +501,7 @@ public class GeneradorDeCodigo {
             e.printStackTrace();
         }
     }
-    
+
     public void generarArchivoExe(String nombreArchivo) {
         try {
             FileOutputStream archivo = new FileOutputStream("./" + nombreArchivo + ".exe");
@@ -527,9 +562,25 @@ public class GeneradorDeCodigo {
             e.printStackTrace();
         }
     }
-    
+
     private String toHexa(int valor) {
         return "0x" + Integer.toHexString(valor).toUpperCase();
+    }
+
+    public void mostrarInicioDeProposicion(String instruccion) {
+        System.out.println("\n\n------------ [Inicio] proposicion " + instruccion + " ------------\n");
+    }
+
+    public void mostrarFinalDeProposicion(String instruccion) {
+        System.out.println("\n------------ [Fin] proposicion " + instruccion + " ------------\n");
+    }
+    
+    private void mostrarInicioDeInstruccion(String instruccion, int tamano) {
+        System.out.println("\n-- [Cargando] instruccion " + instruccion + " (" + tamano + " bytes):");
+    }
+
+    private void mostrarFinDeInstruccion(String instruccion) {
+        System.out.println("\n-- [Finalizada] instruccion " + instruccion + " Finalizada");
     }
 
     private void cargarParteDeLongitudFija() {
