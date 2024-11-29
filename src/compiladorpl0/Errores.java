@@ -23,6 +23,8 @@ public class Errores {
     static String ERR_SINT_FALTA_IDENTIFICADOR = "\nError sintactico: Se esperaba un identificador";
     static String ERR_SINT_FALTA_NUMERO = "\nError sintactico: Se esperaba un numero";
     static String ERR_SINT_FALTA_FACTOR = "\nError sintactico: Se esperaba un factor";
+    static String ERR_SINT_FALTA_DOS_PUNTOS_IGUAL_EN_FOR = "\nError sintactico: Se esperaba un ':=' en la asignacion del for";    
+    static String ERR_SINT_FALTA_DO_EN_FOR = "\nError sintactico: Se esperaba un 'do' para la proposiocion del for";    
     
     //ERRORES SEMANTICOS
     static String ERR_SEM_IDENTIFICADOR = "\nError semantico: El identificador '";

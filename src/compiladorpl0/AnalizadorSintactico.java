@@ -184,8 +184,6 @@ public class AnalizadorSintactico {
                 semantico.validarQueEsIdentificadorVarDeclarado(tokenActual.getValor(), base, desplazamiento);
 
                 avanzar();
-                
-                
 
                 switch (tokenActual.getTipo()) {
                     case TokenType.ASIGNACION:
@@ -388,31 +386,104 @@ public class AnalizadorSintactico {
                     case "for":
                         avanzar();// Saltar el "for"
                         analizarIdentificador();
+                        identReciente = tokenActual;
 
                         semantico.validarQueEsIdentificadorVarDeclarado(tokenActual.getValor(), base, desplazamiento);
+                        Identificador identVar = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);
 
                         avanzar();// Salto el identificador
 
                         if (tokenActual.getTipo() == TokenType.ASIGNACION) {
                             avanzar(); // Saltar ":="
                             analizarExpresion(base, desplazamiento);
-                        }
-
-                        if (!tokenActual.getValor().equals("to") && !tokenActual.getValor().equals("downto")) {
-                            System.out.println(ERR_SINT_FALTA_TO_O_DOWNTO_EN_BUCLE_FOR);
+                        } else {
+                            System.out.println(ERR_SINT_FALTA_DOS_PUNTOS_IGUAL_EN_FOR);
                             System.exit(0);
                         }
-                        avanzar(); // Saltar el "to" o "downto"
+                        
+                        
+                        genCod.mostrarInicioDeProposicion("ASIGNAR (" + identReciente + ")");
+                        genCod.asignarAVariable(identVar.getValor() * 4); // Cada variable ocupa 4 bytes
+                        genCod.mostrarFinalDeProposicion("ASIGNAR");
+                        
+                        
+                        
+
+                        int preSalto = genCod.getSize();
+                        genCod.mov_eax_edi(identVar.getValor());
+                        genCod.push_eax();
+
+                        boolean esDownto = true;
+
+                        switch (tokenActual.getValor()) {
+                            case "to":
+                                esDownto = false;
+                                avanzar(); // Saltar el "to"
+                                break;
+
+                            case "downto":
+                                esDownto = true;
+                                avanzar(); // Saltar el "downto"
+                                break;
+
+                            default:
+                                System.out.println(ERR_SINT_FALTA_TO_O_DOWNTO_EN_BUCLE_FOR);
+                                System.exit(0);
+                        }
 
                         analizarExpresion(base, desplazamiento);
 
-                        if (!tokenActual.getValor().equals("do")) {
-                            System.out.println(ERR_SINT_FALTA_DO_EN_BUCLE_FOR);
-                            System.exit(0);
-                        }
-                        avanzar(); // Saltar el "do"
+                        int punto;
+                        if (!esDownto) {
+                            genCod.expresionCondicional(MENOR_O_IG);
+                            punto = genCod.getSize();
 
-                        analizarProposicion(base, desplazamiento);
+                            if (!tokenActual.getValor().equals("do")) {
+                                System.out.println(ERR_SINT_FALTA_DO_EN_FOR);
+                                System.exit(0);
+                            }
+                            avanzar();//salta el "do"
+
+                            analizarProposicion(base, desplazamiento);
+
+                            //incremento la variable
+                            Identificador varIncremento = semantico.buscarIdentificador(identVar.getNombre(), base, desplazamiento);
+                            genCod.mov_eax_edi(varIncremento.getValor() * 4);
+                            genCod.push_eax();
+                            genCod.mov_eax(1);
+                            genCod.push_eax();
+                            genCod.sumar();
+
+                            genCod.asignarAVariable(varIncremento.getValor() * 4);
+                        } else {
+                            genCod.expresionCondicional(MAYOR_O_IG);
+                            punto = genCod.getSize();
+
+                            if (!tokenActual.getValor().equals("do")) {
+                                System.out.println(ERR_SINT_FALTA_DO_EN_FOR);
+                                System.exit(0);
+                            }
+                            avanzar();//salta el "do"
+
+                            analizarProposicion(base, desplazamiento);
+
+                            //decremento la variable
+                            Identificador varDecremento = semantico.buscarIdentificador(identVar.getNombre(), base, desplazamiento);
+                            genCod.mov_eax_edi(varDecremento.getValor() * 4);
+                            genCod.push_eax();
+                            genCod.mov_eax(-1);
+                            genCod.push_eax();
+                            genCod.sumar();
+
+                            genCod.asignarAVariable(varDecremento.getValor() * 4);
+                        }
+
+                        int saltoDistancia = preSalto - (genCod.getSize() + 5); // ignoro los 5 bytes de la instruccion
+
+                        genCod.jmp_dir_a(saltoDistancia);
+                        int destino = genCod.getSize();
+                        int distancia = destino - punto;
+                        genCod.fixUp((punto - 4), distancia);
 
                     default:
                         // Si el token no coincide con ningún caso, puede ser una proposición vacía

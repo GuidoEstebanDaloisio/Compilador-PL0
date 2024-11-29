@@ -1,6 +1,19 @@
-var x;
-
+const menosOcho = -8;
+var i, j, k;
 begin
-  x--;
-  writeln('x: ',x)
+  for i := 1 to -menosOcho do
+    begin
+    write (i);
+    write ('_')
+  end;
+ writeln;
+ k := 9;
+ for i := 6 downto 1 do
+  begin
+   for j := 1 to i do write ('__');
+   writeln (k);
+   k++
+  end;
+ for i := k to k + (-1-menosOcho) do write (i, ' ');
+ writeln
 end.

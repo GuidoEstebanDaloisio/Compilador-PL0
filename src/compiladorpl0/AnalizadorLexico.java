@@ -26,7 +26,7 @@ public class AnalizadorLexico {
         if (currentChar == -1) {
             eofReached = true;
         } else {
-            //System.out.print((char) currentChar); //MOSTRAR EL PROGRAMA
+            System.out.print((char) currentChar); //MOSTRAR EL PROGRAMA
         }
     }
 
