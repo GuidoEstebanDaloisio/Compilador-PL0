@@ -282,7 +282,7 @@ public class GeneradorDeCodigo {
     }
 
     public void call(int distancia) { //CALL [ E8 56 FF FF FF ]
-        System.out.println("-- Cargando CALL a " + toHexa(getSize() + (distancia + 5)) + " --");
+        System.out.println("-- [Cargando] CALL a " + toHexa(getSize() + (distancia + 5)) + " --");
         cargarByte(0xE8);
         cargarInt(distancia);
     }
@@ -312,7 +312,7 @@ public class GeneradorDeCodigo {
 
     public void jmp_dir_a(int valor) { //Código de instrucción para JMP dir
         // CUANDO SE CONOCE EL VALOR DEL JUMP
-        System.out.println("-- Cargando JUMP con valor: " + valor + " (" + toHexa(valor) + ") --");
+        System.out.println("-- [Cargando] JUMP con valor: " + valor + " (" + toHexa(valor) + ") --");
         cargarByte(0xE9);
         cargarInt(valor);
     }
@@ -540,45 +540,6 @@ public class GeneradorDeCodigo {
             int byteValue = (intACargar >> (i * 8)) & 0xFF; // Extrae el byte correspondiente
             cargarByteEn(byteValue, ubicacion + i); // Carga cada byte en la posición específica
         }
-    }
-
-    public void fixUp(int pos, int d){
-        Byte[] b = intAByte(d);
-        for(int i = 0; i < 4; i++){
-            memoria.set(pos + i, b[i]); // sobreescribo cada uno de los 4 bytes, colocando a donde deberia hacer el salto
-        }
-    }
-    
-     private static Byte[] intAByte(int valor){
-       int revint = revertirEntero(valor);    // Da vuelta los bytes de un entero antes de cargarlo
-       Byte[] b = enteroAByteArray(revint);   // Separo los bytes y los cargo en un array
-       
-       return b;
-    }
-    
-    private static int revertirEntero(int v) {  // enmascaro los bits y doy vuelta, para tener el Integer en disposicion LITTLE_ENDIAN
-        int b1 = (v >> 0) & 0xff;
-        int b2 = (v >> 8) & 0xff;
-        int b3 = (v >> 16) & 0xff;
-        int b4 = (v >> 24) & 0xff;
-
-        return (b1 << 24 | b2 << 16 | b3 << 8 | b4 << 0);   // Paso el integer dado vuelta
-    }
-
-    private static Byte[] enteroAByteArray(int valor) {
-        Byte[] val = new Byte[4];
-
-        Integer v1 = (valor >> 24) & 0xff;  // Aislo los bits que me interesan y los cargo en un array por separado
-        Integer v2 = (valor >> 16) & 0xff;
-        Integer v3 = (valor >> 8) & 0xff;
-        Integer v4 = (valor >> 0) & 0xff;
-
-        val[0] = v1.byteValue();
-        val[1] = v2.byteValue();
-        val[2] = v3.byteValue();
-        val[3] = v4.byteValue();
-
-        return val;
     }
     
     //Se usaria con el punto final en el analizador sintactico

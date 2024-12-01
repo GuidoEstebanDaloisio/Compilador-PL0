@@ -384,6 +384,7 @@ public class AnalizadorSintactico {
                         break;
 
                     case "for":
+                        genCod.mostrarInicioDeProposicion("FOR");
                         avanzar();// Saltar el "for"
                         analizarIdentificador();
                         identReciente = tokenActual;
@@ -393,23 +394,21 @@ public class AnalizadorSintactico {
 
                         avanzar();// Salto el identificador
 
-                        if (tokenActual.getTipo() == TokenType.ASIGNACION) {
-                            avanzar(); // Saltar ":="
-                            analizarExpresion(base, desplazamiento);
-                        } else {
+                        if (tokenActual.getTipo() != TokenType.ASIGNACION) {
                             System.out.println(ERR_SINT_FALTA_DOS_PUNTOS_IGUAL_EN_FOR);
                             System.exit(0);
                         }
+                        avanzar(); // Saltar ":="
                         
-                        
+                        analizarExpresion(base, desplazamiento);
+
                         genCod.mostrarInicioDeProposicion("ASIGNAR (" + identReciente + ")");
                         genCod.asignarAVariable(identVar.getValor() * 4); // Cada variable ocupa 4 bytes
                         genCod.mostrarFinalDeProposicion("ASIGNAR");
-                        
-                        
-                        
 
-                        int preSalto = genCod.getSize();
+                        inicioCondicion = genCod.getSize();
+                        
+                        //Cargo el identificador
                         genCod.mov_eax_edi(identVar.getValor());
                         genCod.push_eax();
 
@@ -433,10 +432,9 @@ public class AnalizadorSintactico {
 
                         analizarExpresion(base, desplazamiento);
 
-                        int punto;
                         if (!esDownto) {
                             genCod.expresionCondicional(MENOR_O_IG);
-                            punto = genCod.getSize();
+                            finCondicion = genCod.getSize();
 
                             if (!tokenActual.getValor().equals("do")) {
                                 System.out.println(ERR_SINT_FALTA_DO_EN_FOR);
@@ -453,11 +451,10 @@ public class AnalizadorSintactico {
                             genCod.mov_eax(1);
                             genCod.push_eax();
                             genCod.sumar();
-
                             genCod.asignarAVariable(varIncremento.getValor() * 4);
                         } else {
                             genCod.expresionCondicional(MAYOR_O_IG);
-                            punto = genCod.getSize();
+                            finCondicion = genCod.getSize();
 
                             if (!tokenActual.getValor().equals("do")) {
                                 System.out.println(ERR_SINT_FALTA_DO_EN_FOR);
@@ -467,6 +464,8 @@ public class AnalizadorSintactico {
 
                             analizarProposicion(base, desplazamiento);
 
+                            
+                            
                             //decremento la variable
                             Identificador varDecremento = semantico.buscarIdentificador(identVar.getNombre(), base, desplazamiento);
                             genCod.mov_eax_edi(varDecremento.getValor() * 4);
@@ -474,16 +473,17 @@ public class AnalizadorSintactico {
                             genCod.mov_eax(-1);
                             genCod.push_eax();
                             genCod.sumar();
-
                             genCod.asignarAVariable(varDecremento.getValor() * 4);
                         }
 
-                        int saltoDistancia = preSalto - (genCod.getSize() + 5); // ignoro los 5 bytes de la instruccion
+                        finProposicion = genCod.getSize() + 5; // Se suma 5 porque el siguiente JUMP E9 _ _ _ _ ocupa 5 bytes
+                        
+                        genCod.jmp_dir_a(inicioCondicion - finProposicion); // Vuelve  a la condición para evaluarla nuevamente (happy path)
+                        distanciaSalto = finProposicion - finCondicion;
+                        genCod.cargarIntEn(distanciaSalto, finCondicion - 4); // Se carga la distancia en el JUMP reservado al final de la condición - 4 para quedar despues del JUMP E9
+                        genCod.mostrarFinalDeProposicion("FOR");
 
-                        genCod.jmp_dir_a(saltoDistancia);
-                        int destino = genCod.getSize();
-                        int distancia = destino - punto;
-                        genCod.fixUp((punto - 4), distancia);
+                        break;
 
                     default:
                         // Si el token no coincide con ningún caso, puede ser una proposición vacía
