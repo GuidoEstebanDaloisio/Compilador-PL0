@@ -201,28 +201,14 @@ public class AnalizadorSintactico {
                         avanzar(); // Saltar "++"
 
                         Identificador varIncremento = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);
-
-                        genCod.mov_eax_edi(varIncremento.getValor() * 4);
-                        genCod.push_eax();
-                        genCod.mov_eax(1);
-                        genCod.push_eax();
-                        genCod.sumar();
-
-                        genCod.asignarAVariable(varIncremento.getValor() * 4); // Cada variable ocupa 4 bytes
-
+                        genCod.incrementarVar(varIncremento);
                         break;
 
-                    case TokenType.DECREMENTO:
+                    case TokenType.DECRECIMIENTO:
                         avanzar(); // Saltar "--"
 
-                        Identificador varDecremento = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);
-                        genCod.mov_eax_edi(varDecremento.getValor() * 4);
-                        genCod.push_eax();
-                        genCod.mov_eax(-1);
-                        genCod.push_eax();
-                        genCod.sumar();
-
-                        genCod.asignarAVariable(varDecremento.getValor() * 4); // Cada variable ocupa 4 bytes                        
+                        Identificador varDecrecimiento = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);    
+                        genCod.decrecerVar(varDecrecimiento);                     
                         break;
 
                     default:
@@ -409,7 +395,7 @@ public class AnalizadorSintactico {
                         inicioCondicion = genCod.getSize();
                         
                         //Cargo el identificador
-                        genCod.mov_eax_edi(identVar.getValor());
+                        genCod.mov_eax_edi(identVar.getValor()*4);
                         genCod.push_eax();
 
                         boolean esDownto = true;
@@ -446,12 +432,8 @@ public class AnalizadorSintactico {
 
                             //incremento la variable
                             Identificador varIncremento = semantico.buscarIdentificador(identVar.getNombre(), base, desplazamiento);
-                            genCod.mov_eax_edi(varIncremento.getValor() * 4);
-                            genCod.push_eax();
-                            genCod.mov_eax(1);
-                            genCod.push_eax();
-                            genCod.sumar();
-                            genCod.asignarAVariable(varIncremento.getValor() * 4);
+                            
+                            genCod.incrementarVar(varIncremento);
                         } else {
                             genCod.expresionCondicional(MAYOR_O_IG);
                             finCondicion = genCod.getSize();
@@ -466,14 +448,10 @@ public class AnalizadorSintactico {
 
                             
                             
-                            //decremento la variable
-                            Identificador varDecremento = semantico.buscarIdentificador(identVar.getNombre(), base, desplazamiento);
-                            genCod.mov_eax_edi(varDecremento.getValor() * 4);
-                            genCod.push_eax();
-                            genCod.mov_eax(-1);
-                            genCod.push_eax();
-                            genCod.sumar();
-                            genCod.asignarAVariable(varDecremento.getValor() * 4);
+                            //decrecer la variable
+                            Identificador varDecrecimiento = semantico.buscarIdentificador(identVar.getNombre(), base, desplazamiento);
+                            
+                           genCod.decrecerVar(varDecrecimiento);
                         }
 
                         finProposicion = genCod.getSize() + 5; // Se suma 5 porque el siguiente JUMP E9 _ _ _ _ ocupa 5 bytes

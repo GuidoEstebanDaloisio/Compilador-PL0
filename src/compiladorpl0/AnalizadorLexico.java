@@ -67,7 +67,7 @@ public class AnalizadorLexico {
             avanzar();
             if (currentChar == '-') {
                 avanzar();
-                return new Token(TokenType.DECREMENTO, "--");
+                return new Token(TokenType.DECRECIMIENTO, "--");
             } else if (Character.isDigit((char) currentChar)) {// Manejo de números negativos
                 StringBuilder numero = new StringBuilder("-");
                 while (Character.isDigit((char) currentChar)) {

@@ -237,7 +237,7 @@ public class GeneradorDeCodigo {
         pop_ebx();
         imul_ebx();
         push_eax();
-        mostrarFinDeInstruccion("MULTIPLICAR");        
+        mostrarFinDeInstruccion("MULTIPLICAR");
     }
 
     public void dividir() { //DIVIDIR [ 58 5B 93 99 F7 FB 50 ]
@@ -249,7 +249,7 @@ public class GeneradorDeCodigo {
         idiv_ebx();
         push_eax();
         mostrarFinDeInstruccion("DIVIDIR");
-        
+
     }
 
     public void restar() { //RESTAR [ 58 5B 93 29 D8 50 ]
@@ -278,7 +278,7 @@ public class GeneradorDeCodigo {
         pop_eax();
         neg_eax();
         push_eax();
-        mostrarFinDeInstruccion("NEGAR");        
+        mostrarFinDeInstruccion("NEGAR");
     }
 
     public void call(int distancia) { //CALL [ E8 56 FF FF FF ]
@@ -449,19 +449,39 @@ public class GeneradorDeCodigo {
         jmp_dir();
     }
 
+    public void incrementarVar(Identificador varIncremento) {
+        mov_eax(1);
+        push_eax();
+        mov_eax_edi(varIncremento.getValor() * 4);
+        push_eax();
+        sumar();
+
+        asignarAVariable(varIncremento.getValor() * 4); // Cada variable ocupa 4 bytes
+    }
+
+    public void decrecerVar(Identificador varDecrecimiento) {
+        mov_eax(-1);
+        push_eax();
+        mov_eax_edi(varDecrecimiento.getValor() * 4);
+        push_eax();
+        sumar();
+
+        asignarAVariable(varDecrecimiento.getValor() * 4); // Cada variable ocupa 4 bytes 
+    }
+
     public void asignarAVariable(int valorVar) {
         pop_eax();
         mov_edi_eax(valorVar);
     }
 
     public void mov_eax(int valor) {// Código de instrucción para MOV EAX, abcdefgh
-        mostrarInicioDeInstruccion("MOV EAX [ B8 _ _ _ _ ] - Valor cargado: "+valor, 5);
+        mostrarInicioDeInstruccion("MOV EAX [ B8 _ _ _ _ ] - Valor cargado: " + valor, 5);
         cargarByte(0xB8);
         cargarInt(valor);
     }
 
     public void mov_eax_edi(int valor) {//Código de instrucción para MOV EAX, [EDI+abcdefgh]
-        mostrarInicioDeInstruccion("MOV EAX, [EDI+abcdefgh] [ 8B 87 _ _ _ _ ] - Valor cargado: "+valor, 6);
+        mostrarInicioDeInstruccion("MOV EAX, [EDI+abcdefgh] [ 8B 87 _ _ _ _ ] - Valor cargado: " + valor, 6);
         cargarByte(0x8B);
         cargarByte(0x87);
         cargarInt(valor);
@@ -469,7 +489,7 @@ public class GeneradorDeCodigo {
     }
 
     private void mov_edi_eax(int valor) {//Código de instrucción para MOV [EDI+abcdefgh], EAX
-        mostrarInicioDeInstruccion("MOV [EDI+abcdefgh], EAX  [ 89 87 _ _ _ _ ] - Valor cargado: "+valor, 6);
+        mostrarInicioDeInstruccion("MOV [EDI+abcdefgh], EAX  [ 89 87 _ _ _ _ ] - Valor cargado: " + valor, 6);
         cargarByte(0x89);
         cargarByte(0x87);
         cargarInt(valor);
@@ -541,7 +561,7 @@ public class GeneradorDeCodigo {
             cargarByteEn(byteValue, ubicacion + i); // Carga cada byte en la posición específica
         }
     }
-    
+
     //Se usaria con el punto final en el analizador sintactico
     public void volcarMemoriaEnArchivo(String nombreArchivo) {
 
@@ -574,7 +594,7 @@ public class GeneradorDeCodigo {
     public void mostrarFinalDeProposicion(String instruccion) {
         System.out.println("\n------------ [Fin] proposicion " + instruccion + " ------------\n");
     }
-    
+
     private void mostrarInicioDeInstruccion(String instruccion, int tamano) {
         System.out.println("\n-- [Cargando] instruccion " + instruccion + " (" + tamano + " bytes):");
     }

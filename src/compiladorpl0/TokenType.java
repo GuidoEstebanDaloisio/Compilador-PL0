@@ -24,5 +24,5 @@ public enum TokenType {
     PUNTO,
     PALABRA_RESERVADA,
     INCREMENTO, // ++
-    DECREMENTO  // --
+    DECRECIMIENTO  // --
 }
