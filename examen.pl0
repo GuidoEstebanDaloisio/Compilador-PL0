@@ -1,9 +1,2 @@
-var x, y;
-begin
-  for x := 1 to 5 do
-  begin
-    for y := x to 3 do
-      writeln('x: ',x,' y: ',y);
-  writeln;
-  end;
-end.
+
+  do 3 times writeln('hola'). 

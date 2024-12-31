@@ -207,8 +207,8 @@ public class AnalizadorSintactico {
                     case TokenType.DECRECIMIENTO:
                         avanzar(); // Saltar "--"
 
-                        Identificador varDecrecimiento = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);    
-                        genCod.decrecerVar(varDecrecimiento);                     
+                        Identificador varDecrecimiento = semantico.buscarIdentificador(identReciente.getValor(), base, desplazamiento);
+                        genCod.decrecerVar(varDecrecimiento);
                         break;
 
                     default:
@@ -385,7 +385,7 @@ public class AnalizadorSintactico {
                             System.exit(0);
                         }
                         avanzar(); // Saltar ":="
-                        
+
                         analizarExpresion(base, desplazamiento);
 
                         genCod.mostrarInicioDeProposicion("ASIGNAR (" + identReciente + ")");
@@ -393,9 +393,9 @@ public class AnalizadorSintactico {
                         genCod.mostrarFinalDeProposicion("ASIGNAR");
 
                         inicioCondicion = genCod.getSize();
-                        
+
                         //Cargo el identificador
-                        genCod.mov_eax_edi(identVar.getValor()*4);
+                        genCod.mov_eax_edi(identVar.getValor() * 4);
                         genCod.push_eax();
 
                         boolean esDownto = true;
@@ -432,7 +432,7 @@ public class AnalizadorSintactico {
 
                             //incremento la variable
                             Identificador varIncremento = semantico.buscarIdentificador(identVar.getNombre(), base, desplazamiento);
-                            
+
                             genCod.incrementarVar(varIncremento);
                         } else {
                             genCod.expresionCondicional(MAYOR_O_IG);
@@ -446,21 +446,114 @@ public class AnalizadorSintactico {
 
                             analizarProposicion(base, desplazamiento);
 
-                            
-                            
                             //decrecer la variable
                             Identificador varDecrecimiento = semantico.buscarIdentificador(identVar.getNombre(), base, desplazamiento);
-                            
-                           genCod.decrecerVar(varDecrecimiento);
+
+                            genCod.decrecerVar(varDecrecimiento);
                         }
 
                         finProposicion = genCod.getSize() + 5; // Se suma 5 porque el siguiente JUMP E9 _ _ _ _ ocupa 5 bytes
-                        
+
                         genCod.jmp_dir_a(inicioCondicion - finProposicion); // Vuelve  a la condición para evaluarla nuevamente (happy path)
                         distanciaSalto = finProposicion - finCondicion;
                         genCod.cargarIntEn(distanciaSalto, finCondicion - 4); // Se carga la distancia en el JUMP reservado al final de la condición - 4 para quedar despues del JUMP E9
                         genCod.mostrarFinalDeProposicion("FOR");
 
+                        break;
+
+                    case "do":
+                        Identificador ident = null;
+                        Integer valorOriginalIdent = null;
+                        Integer valorOriginalNum = null;
+                        boolean seRealizoPrimerBucle = false;
+                        boolean seUsoIdent = false;
+
+                        genCod.mostrarInicioDeProposicion("DO");
+                        avanzar();// Saltar el "do"
+                        switch (tokenActual.getTipo()) {
+                            case IDENTIFICADOR:
+                                analizarIdentificador();
+                                semantico.validarQueEsIdentificadorConstOVarDeclarado(tokenActual.getValor(), base, desplazamiento);
+                                ident = semantico.buscarIdentificador(tokenActual.getValor(), base, desplazamiento);
+                                valorOriginalIdent = ident.getValor();
+
+                                seUsoIdent = true;
+                                break;
+                            case NUMERO:
+                                analizarNumero();
+                                seUsoIdent = false;
+                                break;
+                            default:
+                                System.out.println(ERR_SINT_FALTA_NUM_O_IDENT_EN_DO);
+                                System.exit(0);
+                        }
+
+                        inicioCondicion = genCod.getSize();
+
+                        if (seUsoIdent) {
+
+                            if (!seRealizoPrimerBucle) {
+                                valorOriginalIdent = ident.getValor();
+                            }
+
+                            if (ident.getTipo().equals(VAR)) {
+                                //Utilizo el identificador
+                                genCod.mov_eax_edi(ident.getValor() * 4);
+                            } else {
+                                genCod.mov_eax(ident.getValor());
+
+                            }
+                            genCod.push_eax();
+
+                            //Seteo un cero
+                            genCod.mov_eax(0);
+                            genCod.push_eax();
+                        } else {
+                            if (seRealizoPrimerBucle) {
+
+                                genCod.mov_eax(-1);
+                                genCod.push_eax();
+                                genCod.mov_eax_edi(Integer.parseInt(tokenActual.getValor()) * 4);
+                                genCod.push_eax();
+                                genCod.sumar();
+
+                            } else {
+                                genCod.mov_eax(Integer.parseInt(tokenActual.getValor()));
+                            }
+                            genCod.push_eax();
+
+                            //Seteo un cero
+                            genCod.mov_eax(0);
+                            genCod.push_eax();
+                        }
+                        seRealizoPrimerBucle = true;
+                        avanzar();// Salto el identificador o el numero
+
+                        genCod.expresionCondicional(MAYOR_O_IG);
+
+                        finCondicion = genCod.getSize();
+
+                        if (!tokenActual.getValor().equals("times")) {
+                            System.out.println(ERR_SINT_FALTA_TIMES_EN_DO);
+                            System.exit(0);
+                        }
+                        avanzar();//salta el "times"
+
+                        analizarProposicion(base, desplazamiento);
+
+                        if (seUsoIdent) {
+
+                            Identificador identDecrecimiento = semantico.buscarIdentificador(ident.getNombre(), base, desplazamiento);
+                            genCod.decrecerVar(identDecrecimiento);
+
+                        }
+
+                        finProposicion = genCod.getSize() + 5; // Se suma 5 porque el siguiente JUMP E9 _ _ _ _ ocupa 5 bytes
+                        genCod.jmp_dir_a(inicioCondicion - finProposicion); // Vuelve  a la condición para evaluarla nuevamente (happy path)
+                        distanciaSalto = finProposicion - finCondicion;
+                        genCod.cargarIntEn(distanciaSalto, finCondicion - 4); // Se carga la distancia en el JUMP reservado al final de la condición - 4 para quedar despues del JUMP E9
+
+                        genCod.mostrarFinalDeProposicion("DO");
                         break;
 
                     default:

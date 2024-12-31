@@ -468,7 +468,7 @@ public class GeneradorDeCodigo {
 
         asignarAVariable(varDecrecimiento.getValor() * 4); // Cada variable ocupa 4 bytes 
     }
-
+    
     public void asignarAVariable(int valorVar) {
         pop_eax();
         mov_edi_eax(valorVar);
