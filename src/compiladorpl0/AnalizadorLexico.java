@@ -40,18 +40,19 @@ public class AnalizadorLexico {
         }
 
         if (Character.isLetter((char) currentChar)) {
-            StringBuilder identificador = new StringBuilder();
-            while (Character.isLetterOrDigit((char) currentChar)) {
-                identificador.append((char) currentChar);
-                avanzar();
-            }
-            String lexema = identificador.toString().toLowerCase(); // Convertir a minúsculas
-            if (PALABRAS_RESERVADAS.contains(lexema)) {
-                return new Token(TokenType.PALABRA_RESERVADA, lexema);
-            } else {
-                return new Token(TokenType.IDENTIFICADOR, identificador.toString());
-            }
-        }      
+    StringBuilder identificador = new StringBuilder();
+    while (Character.isLetterOrDigit((char) currentChar)) {
+        identificador.append((char) currentChar);
+        avanzar();
+    }
+    String lexema = identificador.toString().toLowerCase(); // Convertir a minúsculas para estandarizar
+    if (PALABRAS_RESERVADAS.contains(lexema)) {
+        return new Token(TokenType.PALABRA_RESERVADA, lexema);
+    } else {
+        return new Token(TokenType.IDENTIFICADOR, lexema); // También convertir a minúsculas aquí
+    }
+}
+ 
         
         if (Character.isDigit((char) currentChar)) {
             StringBuilder numero = new StringBuilder();

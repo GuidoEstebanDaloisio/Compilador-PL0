@@ -1,10 +1,14 @@
-Const x=5, y=2;
-
-
+const k=8;
+var i,j;
 begin
-  do x times 
-  begin
-    writeln('--Bucle Principal--');
-    do y times writeln('Bucle Secundario');
-  end;
+ i:= 1;
+ j:= K;
+ do k times
+ begin
+ do 4 times
+ write(i, ' ', j, ' ');
+ writeLn;
+ i++;
+ j--
+ end
 end.
