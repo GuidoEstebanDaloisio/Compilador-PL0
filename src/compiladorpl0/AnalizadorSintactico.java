@@ -12,6 +12,7 @@ public class AnalizadorSintactico {
     private final GeneradorDeCodigo genCod;
     private Token tokenActual;
     private int cantVariablesDeclaradas = 0;
+    private int cantContadoresFantasma = 0;
 
     public AnalizadorSintactico(AnalizadorLexico lex, AnalizadorSemantico semantico, GeneradorDeCodigo genCod) throws IOException {
         this.lex = lex;
@@ -463,76 +464,85 @@ public class AnalizadorSintactico {
 
                     case "do":
                         Identificador ident = null;
-                        Integer valorOriginalIdent = null;
-                        Integer valorOriginalNum = null;
-                        boolean seRealizoPrimerBucle = false;
-                        boolean seUsoIdent = false;
 
                         genCod.mostrarInicioDeProposicion("DO");
+
+                        //Creo una variable fantasma que contara la cantidad de vueltas que dio el bucle y lo comparara con el valor deseado
+                        String nombreDeContadorFantasmaVigente = "contadorFantasma" + cantContadoresFantasma++;
+
+                        Token contadorFantasma = new Token(IDENTIFICADOR, nombreDeContadorFantasmaVigente);
+
+                        semantico.registrarIdentificador(contadorFantasma, VAR, base, desplazamiento);
+                        desplazamiento++;
+                        semantico.asignarValor(nombreDeContadorFantasmaVigente, cantVariablesDeclaradas, base, desplazamiento);
+                        cantVariablesDeclaradas++;
+
+                        //Guardo la variable
+                        genCod.mov_eax_edi(semantico.obtenerValorDelIdentificador(nombreDeContadorFantasmaVigente, base, desplazamiento) * 4);
+                        genCod.push_eax();
+
+                        //Guardo el numero
+                        genCod.mov_eax(0);
+                        genCod.push_eax();
+
+                        //Y le asigno el valor cero
+                        identVar = semantico.buscarIdentificador(nombreDeContadorFantasmaVigente, base, desplazamiento);
+                        genCod.mostrarInicioDeProposicion("ASIGNAR (" + nombreDeContadorFantasmaVigente + ")");
+                        genCod.asignarAVariable(identVar.getValor() * 4); // Cada variable ocupa 4 bytes
+                        genCod.mostrarFinalDeProposicion("ASIGNAR");
+
                         avanzar();// Saltar el "do"
+
+                        inicioCondicion = genCod.getSize();
+
                         switch (tokenActual.getTipo()) {
                             case IDENTIFICADOR:
                                 analizarIdentificador();
                                 semantico.validarQueEsIdentificadorConstOVarDeclarado(tokenActual.getValor(), base, desplazamiento);
                                 ident = semantico.buscarIdentificador(tokenActual.getValor(), base, desplazamiento);
-                                valorOriginalIdent = ident.getValor();
 
-                                seUsoIdent = true;
+                                switch (ident.getTipo()) {
+                                    case VAR:
+                                        genCod.mov_eax_edi(semantico.obtenerValorDelIdentificador(tokenActual.getValor(), base, desplazamiento) * 4);
+                                        genCod.push_eax();
+
+                                        break;
+
+                                    case CONST:
+                                        genCod.mov_eax(semantico.obtenerValorDelIdentificador(tokenActual.getValor(), base, desplazamiento));
+                                        genCod.push_eax();
+                                        break;
+                                }
                                 break;
+
                             case NUMERO:
                                 analizarNumero();
-                                seUsoIdent = false;
+
+                                //Cargo el numero
+                                genCod.mov_eax(Integer.parseInt(tokenActual.getValor()));
+                                genCod.push_eax();
                                 break;
                             default:
                                 System.out.println(ERR_SINT_FALTA_NUM_O_IDENT_EN_DO);
                                 System.exit(0);
                         }
 
-                        inicioCondicion = genCod.getSize();
+                        //Preparo la variable contadora de bucles
+                        genCod.mov_eax_edi(semantico.obtenerValorDelIdentificador(nombreDeContadorFantasmaVigente, base, desplazamiento) * 4);
+                        genCod.push_eax();
 
-                        if (seUsoIdent) {
-
-                            if (!seRealizoPrimerBucle) {
-                                valorOriginalIdent = ident.getValor();
-                            }
-
-                            if (ident.getTipo().equals(VAR)) {
-                                //Utilizo el identificador
-                                genCod.mov_eax_edi(ident.getValor() * 4);
-                            } else {
-                                genCod.mov_eax(ident.getValor());
-
-                            }
-                            genCod.push_eax();
-
-                            //Seteo un cero
-                            genCod.mov_eax(0);
-                            genCod.push_eax();
-                        } else {
-                            if (seRealizoPrimerBucle) {
-
-                                genCod.mov_eax(-1);
-                                genCod.push_eax();
-                                genCod.mov_eax_edi(Integer.parseInt(tokenActual.getValor()) * 4);
-                                genCod.push_eax();
-                                genCod.sumar();
-
-                            } else {
-                                genCod.mov_eax(Integer.parseInt(tokenActual.getValor()));
-                            }
-                            genCod.push_eax();
-
-                            //Seteo un cero
-                            genCod.mov_eax(0);
-                            genCod.push_eax();
-                        }
-                        seRealizoPrimerBucle = true;
-                        avanzar();// Salto el identificador o el numero
-
-                        genCod.expresionCondicional(MAYOR_O_IG);
+                        genCod.expresionCondicional(MAYOR);
 
                         finCondicion = genCod.getSize();
 
+                        avanzar();// Salta el ident o el numero
+
+                        
+                        
+                        
+                        
+                        
+                        
                         if (!tokenActual.getValor().equals("times")) {
                             System.out.println(ERR_SINT_FALTA_TIMES_EN_DO);
                             System.exit(0);
@@ -541,12 +551,9 @@ public class AnalizadorSintactico {
 
                         analizarProposicion(base, desplazamiento);
 
-                        if (seUsoIdent) {
-
-                            Identificador identDecrecimiento = semantico.buscarIdentificador(ident.getNombre(), base, desplazamiento);
-                            genCod.decrecerVar(identDecrecimiento);
-
-                        }
+                        //Le sumo uno al contador de bucles
+                        Identificador varIncremento = semantico.buscarIdentificador(nombreDeContadorFantasmaVigente, base, desplazamiento);
+                        genCod.incrementarVar(varIncremento);
 
                         finProposicion = genCod.getSize() + 5; // Se suma 5 porque el siguiente JUMP E9 _ _ _ _ ocupa 5 bytes
                         genCod.jmp_dir_a(inicioCondicion - finProposicion); // Vuelve  a la condición para evaluarla nuevamente (happy path)
@@ -554,8 +561,8 @@ public class AnalizadorSintactico {
                         genCod.cargarIntEn(distanciaSalto, finCondicion - 4); // Se carga la distancia en el JUMP reservado al final de la condición - 4 para quedar despues del JUMP E9
 
                         genCod.mostrarFinalDeProposicion("DO");
-                        break;
 
+                        break;
                     default:
                         // Si el token no coincide con ningún caso, puede ser una proposición vacía
                         // En este caso, se considera una proposición válida si no hay más tokens

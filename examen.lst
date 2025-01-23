@@ -1,5 +1,0 @@
-   1: var x, y;
-   2: begin
-   3:   for x := 1 to 5 do
-       ^
-ERROR: Identificador no declarado (for)

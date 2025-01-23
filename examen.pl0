@@ -1,2 +1,10 @@
+Const x=5, y=2;
 
-  do 3 times writeln('hola'). 
+
+begin
+  do x times 
+  begin
+    writeln('--Bucle Principal--');
+    do y times writeln('Bucle Secundario');
+  end;
+end.

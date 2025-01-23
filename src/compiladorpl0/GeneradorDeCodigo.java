@@ -182,7 +182,7 @@ public class GeneradorDeCodigo {
         cargarByte(0x00);
     }
 
-    private void pop_eax() {// Código de instrucción para POP EAX
+    public void pop_eax() {// Código de instrucción para POP EAX
         mostrarInicioDeInstruccion("POP EAX [ 58 ]", 1);
         cargarByte(0x58);
     }
